@@ -4,8 +4,18 @@ class Barang_model extends CI_Model
 
     public function get_all_barang()
     {
-        return $this->db->order_by('created_at', 'DESC')->get('barang')->result();
+        return $this->db
+            ->select("barang.*, 
+            CASE 
+                WHEN status = 't' THEN 'Aktif' 
+                ELSE 'Tidak Aktif' 
+            END AS status_keterangan")
+            ->from('barang')
+            ->order_by('created_at', 'DESC')
+            ->get()
+            ->result();
     }
+
 
     public function get_barang($limit, $offset, $search = null)
     {
@@ -41,6 +51,11 @@ class Barang_model extends CI_Model
     public function update_barang($id, $data)
     {
         return $this->db->update('barang', $data, ['id' => $id]);
+    }
+
+    public function update_status($id, $status)
+    {
+        return $this->db->where('id', $id)->update('barang', ['status' => $status]);
     }
 
     public function delete_barang($id)
