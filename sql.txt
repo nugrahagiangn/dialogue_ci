@@ -1,0 +1,30 @@
+CREATE TABLE barang (
+  id SERIAL PRIMARY KEY,
+  nama VARCHAR(100),
+  harga NUMERIC(10,2)
+);
+
+CREATE TABLE pembeli (
+  id SERIAL PRIMARY KEY,
+  nama VARCHAR(100),
+  alamat TEXT
+);
+
+CREATE TABLE transaksi (
+  id SERIAL PRIMARY KEY,
+  pembeli_id INT REFERENCES pembeli(id),
+  barang_id INT REFERENCES barang(id),
+  tanggal DATE,
+  jumlah INT,
+  total NUMERIC(10,2)
+);
+
+SELECT * FROM barang 
+
+INSERT INTO barang (nama, harga) VALUES
+('Le Minerale', 3000),
+('Surya 16', 26000),
+('Indomie Goreng', 3000)
+
+ALTER TABLE transaksi
+DROP COLUMN total
