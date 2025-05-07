@@ -60,8 +60,9 @@ class Barang extends CI_Controller
     {
         $barang = $this->Barang_model->get_by_id($id);
         if ($barang) {
-            $new_status = ($barang->status === "t") ? "f" : "t";
-            $this->Barang_model->update_status($id, $new_status);
+            $data['status'] = ($barang->status === "t") ? "f" : "t";
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            $this->Barang_model->update_status($id, $data);
         }
         redirect('barang');
     }

@@ -53,9 +53,9 @@ class Barang_model extends CI_Model
         return $this->db->update('barang', $data, ['id' => $id]);
     }
 
-    public function update_status($id, $status)
+    public function update_status($id, $data)
     {
-        return $this->db->where('id', $id)->update('barang', ['status' => $status]);
+        return $this->db->where('id', $id)->update('barang', ['status' => $data['status'], 'updated_at' => $data['updated_at']]);
     }
 
     public function delete_barang($id)

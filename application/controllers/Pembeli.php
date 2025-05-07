@@ -54,7 +54,12 @@ class Pembeli extends CI_Controller
 
     public function hapus($id)
     {
-        $this->Pembeli_model->delete_pembeli($id);
+        $pembeli = $this->Pembeli_model->get_by_id($id);
+        if ($pembeli) {
+            $data['status'] = ($pembeli->status === "t") ? "f" : "t";
+            $data['updated_at'] = date('Y-m-d H:i:s');
+            $this->Pembeli_model->update_status($id, $data);
+        }
         redirect('pembeli');
     }
 }

@@ -5,7 +5,15 @@ class Pembeli_model extends CI_Model
 
     public function get_pembeli()
     {
-        return $this->db->get('pembeli')->result();
+        return $this->db
+            ->select("pembeli.*, 
+            CASE 
+                WHEN status = 't' THEN 'Aktif' 
+                ELSE 'Tidak Aktif' 
+            END AS status_keterangan")
+            ->from('pembeli')
+            ->get()
+            ->result();
     }
 
     public function insert_pembeli($data)
@@ -22,6 +30,11 @@ class Pembeli_model extends CI_Model
     public function update_pembeli($id, $data)
     {
         return $this->db->update('pembeli', $data, ['id' => $id]);
+    }
+
+    public function update_status($id, $data)
+    {
+        return $this->db->where('id', $id)->update('pembeli', ['status' => $data['status'], 'updated_at' => $data['updated_at']]);
     }
 
     public function delete_pembeli($id)
