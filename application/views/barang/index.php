@@ -13,7 +13,7 @@ if (!empty($barang)) {
         $tbody .= '<tr>';
         $tbody .= '<td>' . $no++ . '</td>';
         $tbody .= '<td>' . $row->nama . '</td>';
-        $tbody .= '<td>' . $row->harga . '</td>';
+        $tbody .= '<td>' . 'Rp ' . number_format($row->harga, 0, ',', '.') . '</td>';
         $tbody .= '<td>
     <a href="' . site_url('barang/hapus/' . $row->id) . '" class="btn btn-sm ' . $statusClass . '" onclick="return confirm(\'Yakin ingin merubah status?\')">' . $statusText . '</a>
 </td>';

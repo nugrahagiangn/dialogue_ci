@@ -4,7 +4,7 @@ class Transaksi_model extends CI_Model
 
     public function get_all_transaksi()
     {
-        $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli');
+        $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli, TO_CHAR(t.tanggal , \'DD Mon YYYY - HH24:MI:SS\') AS tgl ');
         $this->db->from('transaksi t');
         $this->db->join('pembeli p', 't.pembeli_id = p.id');
 
@@ -96,9 +96,19 @@ class Transaksi_model extends CI_Model
         return $this->db->get('pembeli')->result();
     }
 
+    public function get_transaksi_id($id)
+    {
+        $hasil = $this->db->get_where('transaksi', ['id_transaksi' => $id])->row();
+        $id_transaksi = $hasil->id_transaksi;
+        return $id_transaksi;
+    }
+
     public function get_by_id($id)
     {
-        return $this->db->get_where('transaksi', ['id_transaksi' => $id])->row();
+        $this->db->select("*, TO_CHAR(tanggal, 'DD Mon YYYY') AS tgl");
+        $this->db->from('transaksi');
+        $this->db->where('id_transaksi', $id);
+        return $this->db->get()->row();
     }
 
     public function get_detail_by_id($id)
@@ -149,6 +159,6 @@ class Transaksi_model extends CI_Model
     public function delete_transaksi($id)
     {
         $this->db->delete('detail_transaksi', ['transaksi_id' => $id]);
-        $this->db->where('id', $id)->delete('detail_transaksi', ['transaksi_id' => $transaksi_id]);
+        $this->db->delete('transaksi', ['id_transaksi' => $id]);
     }
 }

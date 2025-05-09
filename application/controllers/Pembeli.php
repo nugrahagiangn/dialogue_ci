@@ -46,7 +46,9 @@ class Pembeli extends CI_Controller
     {
         $data = [
             'nama' => $this->input->post('nama'),
-            'alamat' => $this->input->post('alamat')
+            'alamat' => $this->input->post('alamat'),
+            'updated_at' => date('Y-m-d H:i:s')
+
         ];
         $this->Pembeli_model->update_pembeli($id, $data);
         redirect('pembeli');

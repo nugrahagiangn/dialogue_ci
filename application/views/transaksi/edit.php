@@ -16,27 +16,29 @@
 
                 <form action="<?php echo site_url('transaksi/update/' . $transaksi->id_transaksi); ?>" method="post">
                     <div class="mb-3">
-                        <label for="tanggal" class="form-label">Tanggal Transaksi</label>
-                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" value="<?= format_tanggal_indonesia($transaksi->tanggal); ?>" required>
-                    </div>
+                        <label for="id_transaksi" class="form-label">Kode Transaksi : <span><?php echo $transaksi->id_transaksi; ?></span></label>
 
+                    </div>
+                    <div class="mb-3">
+                        <label for="tanggal" class="form-label">Tanggal Transaksi</label>
+                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" value="<?= format_tanggal_indonesia($transaksi->tanggal); ?>">
+                    </div>
                     <div class="mb-3">
                         <label for="pembeli_id" class="form-label">Pembeli</label>
-                        <select name="pembeli_id" class="form-select select2" required>
+                        <select name="pembeli_id" class="form-select select2">
                             <option value="" disabled>-- Pilih Pembeli --</option>
                             <?php foreach ($pembeli as $p): ?>
                                 <option value="<?= $p->id; ?>" <?= ($p->id == $transaksi->pembeli_id) ? 'selected' : ''; ?>><?= $p->nama; ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
                     <div class="mb-3">
                         <label class="form-label">Barang & Jumlah</label>
-                        <div id="barangContainer">
+                        <div id="barangContainerEdit">
                             <?php foreach ($detail as $detail): ?>
                                 <div class="barang-item row g-2 mb-2 align-items-end">
                                     <div class="col-md-6">
-                                        <select name="barang_ids[]" class="form-select barang_id" required>
+                                        <select name="barang_ids[]" class="form-select barang_id">
                                             <option value="">-- Pilih Barang --</option>
                                             <?php foreach ($barang as $b): ?>
                                                 <option value="<?= $b->id; ?>" <?= ($b->id == $detail->barang_id) ? 'selected' : ''; ?> data-harga="<?= $b->harga ?>" data-nama="<?= $b->nama ?>"><?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)</option>
@@ -44,7 +46,7 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $detail->jumlah; ?>" min="1" required>
+                                        <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $detail->jumlah; ?>" min="1">
                                     </div>
                                     <div class="col-md-2">
                                         <input type="hidden" name="hargas[]" class="harga" value="<?= $detail->total; ?>">

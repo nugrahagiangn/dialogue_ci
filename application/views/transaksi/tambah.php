@@ -1,4 +1,5 @@
 <?php $this->load->view('layout/header', ['title' => 'Tambah transaksi']); ?>
+
 <main class="bg-light py-5">
     <div class="container">
         <div class="card shadow-sm">
@@ -13,28 +14,65 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
+                <?php if ($this->session->flashdata('error_message')): ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <?php foreach ($this->session->flashdata('error_message') as $msg): ?>
+                            <div><?= $msg; ?></div>
+                        <?php endforeach; ?>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php endif; ?>
 
                 <form action="<?php echo site_url('transaksi/simpan'); ?>" method="post">
                     <div class="mb-3">
                         <label for="tanggal" class="form-label">Tanggal Transaksi</label>
-                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" placeholder="YYYY-MM-DD" required>
+                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" placeholder="YYYY-MM-DD" value="<?= isset($old['tanggal']) ? $old['tanggal'] : ''; ?>">
                     </div>
 
                     <div class="mb-3">
                         <label for="pembeli_id" class="form-label">Pembeli</label>
-                        <select name="pembeli_id" class="form-select select2" required>
+                        <select name="pembeli_id" class="form-select select2 <?= form_error('pembeli_id') ? 'is-invalid' : '' ?>" id="pembeli_id">
                             <option value="" disabled selected>-- Pilih Pembeli --</option>
                             <?php foreach ($pembeli as $p): ?>
-                                <option value="<?= $p->id; ?>"><?= $p->nama; ?></option>
+                                <option value="<?= $p->id; ?>" <?= isset($old['pembeli_id']) && $old['pembeli_id'] == $p->id ? 'selected' : ''; ?>><?= $p->nama; ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Barang & Jumlah</label>
-                        <div id="barangContainer"></div>
-                        <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang">+ Tambah Barang</button>
+                        <div id="barangContainer">
+                            <?php if (isset($old['barang_ids'])): ?>
+                                <?php foreach ($old['barang_ids'] as $i => $barang_id): ?>
+                                    <div class="barang-item row g-2 mb-2 align-items-end">
+                                        <div class="col-md-6">
+                                            <select name="barang_ids[]" class="form-select barang_id select2">
+                                                <option value="">-- Pilih Barang --</option>
+                                                <?php foreach ($barang as $b): ?>
+                                                    <option value="<?= $b->id; ?>"
+                                                        data-harga="<?= $b->harga; ?>"
+                                                        data-nama="<?= $b->nama; ?>"
+                                                        <?= $barang_id == $b->id ? 'selected' : ''; ?>>
+                                                        <?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $old['jumlahs'][$i]; ?>" min="1">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="hidden" name="hargas[]" class="harga" value="<?= $old['hargas'][$i]; ?>">
+                                            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
 
+                        <button type="button" id="tambahBarang" class="btn btn-primary btn-sm">Tambah Barang</button>
+
+                        <!-- <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang">+ Tambah Barang</button> -->
                         <div id="totalHargaContainer" class="card mt-3 d-none">
                             <div class="card-body">
                                 <h6>Rincian Barang</h6>
@@ -44,19 +82,29 @@
                         </div>
                     </div>
 
+                    <!-- <div id="barangContainer"></div> -->
+
+                    <div id="jumlahContainer"></div>
+
+                    <div id="totalHargaContainer" class="card mt-3 d-none">
+                        <div class="card-body">
+                            <h6>Total Harga per Barang</h6>
+                            <ul class="list-group mb-3" id="listTotalBarang"></ul>
+                            <h5 class="text-end">Subtotal: <span id="subtotalDisplay" class="text-success">Rp 0</span></h5>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="keterangan" class="form-label">Keterangan</label>
-                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Transaksi untuk keperluan pribadi..."></textarea>
+                        <textarea name="keterangan" class="form-control" rows="3" placeholder="Contoh: Transaksi untuk keperluan pribadi..."><?= isset($old['keterangan']) ? $old['keterangan'] : ''; ?></textarea>
                     </div>
 
                     <button type="submit" class="btn btn-success">Simpan</button>
                     <a href="<?php echo site_url('transaksi'); ?>" class="btn btn-secondary">Kembali</a>
                 </form>
-
             </div>
         </div>
     </div>
 
 </main>
-
 <?php $this->load->view('layout/footer'); ?>

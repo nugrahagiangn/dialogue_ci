@@ -19,39 +19,113 @@ class Transaksi extends CI_Controller
         $data['transaksi'] = $this->Transaksi_model->get_all_transaksi(); // Ambil semua tanpa limit
         $data['barang'] = $this->Transaksi_model->get_barang();
         $data['pembeli'] = $this->Transaksi_model->get_pembeli();
+        $data['page'] = 'tambah';
         $this->load->view('transaksi/tambah', $data);
     }
+
+    // public function simpan()
+    // {
+    //     $pembeli_id  = $this->input->post('pembeli_id');
+    //     $tanggal     = $this->input->post('tanggal');
+    //     $keterangan  = $this->input->post('keterangan');
+
+    //     $barang_ids  = $this->input->post('barang_ids');
+    //     $jumlahs     = $this->input->post('jumlahs');
+    //     $hargas      = $this->input->post('hargas');
+
+    //     if (!empty($barang_ids) && is_array($barang_ids)) {
+
+    //         $transaksiData = [
+    //             'pembeli_id' => $pembeli_id,
+    //             'tanggal'    => $tanggal,
+    //             'keterangan' => $keterangan,
+    //             'barang_ids' => $barang_ids,
+    //             'jumlahs'    => $jumlahs,
+    //             'hargas'     => $hargas
+    //         ];
+
+    //         $this->Transaksi_model->simpan_transaksi($transaksiData);
+
+    //         $this->session->set_flashdata('success_message', 'Transaksi berhasil disimpan.');
+    //     } else {
+    //         $this->session->set_flashdata('error_message', 'Pilih minimal satu barang dan jumlah.');
+    //     }
+
+    //     redirect('transaksi');
+    // }
 
     public function simpan()
     {
         $pembeli_id  = $this->input->post('pembeli_id');
         $tanggal     = $this->input->post('tanggal');
         $keterangan  = $this->input->post('keterangan');
+        $barang_ids  = $this->input->post('barang_ids');
+        $jumlahs     = $this->input->post('jumlahs');
+        $hargas      = $this->input->post('hargas');
 
-        $barang_ids  = $this->input->post('barang_id'); // array
-        $jumlahs     = $this->input->post('jumlah');    // array
-        $hargas      = $this->input->post('harga');     // array
+        // Validasi dasar
+        $errors = [];
 
-        if (!empty($barang_ids) && is_array($barang_ids)) {
-
-            $transaksiData = [
-                'pembeli_id' => $pembeli_id,
-                'tanggal'    => $tanggal,
-                'keterangan' => $keterangan,
-                'barang_ids' => $barang_ids,
-                'jumlahs'    => $jumlahs,
-                'hargas'     => $hargas
-            ];
-
-            $this->Transaksi_model->simpan_transaksi($transaksiData);
-
-            $this->session->set_flashdata('success_message', 'Transaksi berhasil disimpan.');
-        } else {
-            $this->session->set_flashdata('error_message', 'Pilih minimal satu barang dan jumlah.');
+        if (!$pembeli_id) {
+            $errors[] = "Pembeli harus dipilih.";
         }
 
+        if (!$tanggal) {
+            $errors[] = "Tanggal transaksi harus diisi.";
+        }
+
+        if (empty($barang_ids) || !is_array($barang_ids)) {
+            $errors[] = "Minimal satu barang harus dipilih.";
+        } else {
+            foreach ($barang_ids as $i => $barang_id) {
+                if (empty($barang_id)) {
+                    $errors[] = "Barang ke-" . ($i + 1) . " tidak boleh kosong.";
+                }
+                if (empty($jumlahs[$i]) || $jumlahs[$i] < 1) {
+                    $errors[] = "Jumlah barang ke-" . ($i + 1) . " harus minimal 1.";
+                }
+                if (empty($hargas[$i]) || $hargas[$i] < 1) {
+                    $errors[] = "Harga barang ke-" . ($i + 1) . " tidak valid.";
+                }
+            }
+        }
+
+        if (!empty($errors)) {
+            $this->session->set_flashdata('error_message', implode('<br>', $errors));
+
+            // Data untuk repopulasi form
+            $data['pembeli'] = $this->Pembeli_model->get_pembeli();
+            $data['barang'] = $this->Barang_model->get_all_barang();
+            $data['old'] = [
+                'pembeli_id' => $pembeli_id,
+                'tanggal' => $tanggal,
+                'keterangan' => $keterangan,
+                'barang_ids' => $barang_ids,
+                'jumlahs' => $jumlahs,
+                'hargas' => $hargas
+            ];
+            $data['page'] = 'tambah';
+
+            $this->load->view('transaksi/tambah', $data);
+            return;
+        }
+
+        // Simpan ke database
+        $transaksiData = [
+            'pembeli_id' => $pembeli_id,
+            'tanggal'    => $tanggal,
+            'keterangan' => $keterangan,
+            'barang_ids' => $barang_ids,
+            'jumlahs'    => $jumlahs,
+            'hargas'     => $hargas
+        ];
+
+        $this->Transaksi_model->simpan_transaksi($transaksiData);
+
+        $this->session->set_flashdata('success_message', 'Transaksi berhasil disimpan.');
         redirect('transaksi');
     }
+
 
     public function edit($encoded_id)
     {
@@ -73,9 +147,42 @@ class Transaksi extends CI_Controller
             'pembeli'   => $this->Pembeli_model->get_pembeli(),
             'barang'    => $this->Barang_model->get_all_barang()
         ];
+        $data['page'] = 'edit';
 
         $this->load->view('transaksi/edit', $data);
     }
+
+    public function detail($encoded_id)
+    {
+        $id = base64_decode(urldecode($encoded_id));
+
+        $transaksi = $this->Transaksi_model->get_by_id($id);
+        $detail    = $this->Transaksi_model->get_detail_by_transaksi($transaksi->id_transaksi);
+
+
+        if (!$transaksi) {
+            show_404();
+        }
+
+        // Ambil data pembeli
+        $pembeli = $this->Pembeli_model->get_by_id($transaksi->pembeli_id);
+
+        // Ambil data barang dari transaksi detail berdasarkan barang_id
+        foreach ($detail as $item) {
+            $barang = $this->Barang_model->get_by_id($item->barang_id);
+            $item->barang = $barang;
+        }
+
+        $data = [
+            'transaksi' => $transaksi,
+            'detail'    => $detail,
+            'pembeli'   => $pembeli
+        ];
+        $data['page'] = 'tambah';
+
+        $this->load->view('transaksi/detail', $data);
+    }
+
 
 
     public function update($id)
@@ -87,7 +194,9 @@ class Transaksi extends CI_Controller
 
     public function hapus($id)
     {
-        $this->Transaksi_model->delete_transaksi($id);
+        $transaksi_id = $this->Transaksi_model->get_transaksi_id($id);
+
+        $this->Transaksi_model->delete_transaksi($transaksi_id);
         $this->session->set_flashdata('success_message', 'Transaksi berhasil dihapus.');
         redirect('transaksi');
     }
