@@ -8,12 +8,33 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+</div> <!-- End container -->
+
+<!-- JS Libraries -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
     let barangList = <?= json_encode(isset($barang) ? $barang : []); ?>;
 
     function formatRupiah(angka) {
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     }
+
+    function updateNomorBarang() {
+        document.querySelectorAll('.barang-item').forEach((el, index) => {
+            const label = el.querySelector('.form-number');
+            if (label) {
+                label.textContent = `#${index + 1}`;
+            }
+        });
+    }
+
+
 
     function updateTotal() {
         let subtotal = 0;
@@ -42,31 +63,58 @@
 
     function buatBarangRowHtml() {
         const options = barangList.map(b => `
-            <option value="${b.id}" data-harga="${b.harga}" data-nama="${b.nama}">
-                ${b.nama} (Rp ${parseInt(b.harga).toLocaleString('id-ID')})
-            </option>`).join('');
+        <option value="${b.id}" data-harga="${b.harga}" data-nama="${b.nama}">
+            ${b.nama} (Rp ${parseInt(b.harga).toLocaleString('id-ID')})
+        </option>`).join('');
 
         return `
-        <div class="barang-item row g-2 mb-2 align-items-end">
-            <div class="col-md-6">
-                <select name="barang_ids[]" class="form-select barang_id select2">
-                    <option value="">-- Pilih Barang --</option>
-                    ${options}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <input type="number" name="jumlahs[]" class="form-control jumlah" value="1" min="1">
-            </div>
-            <div class="col-md-2">
-                <input type="hidden" name="hargas[]" class="harga" value="0">
-                <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
-            </div>
-        </div>`;
+    <div class="barang-item row g-2 mb-2 align-items-end">
+        <div class="col-md-1 text-center">
+                                        <span class="badge bg-secondary form-number">1</span>
+                                    </div>
+                                    <div class="col-md-5">
+            <select name="barang_ids[]" class="form-select barang_id select2">
+                <option value="">-- Pilih Barang --</option>
+                ${options}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="number" name="jumlahs[]" class="form-control jumlah" value="1" min="1">
+        </div>
+        <div class="col-md-2">
+            <input type="hidden" name="hargas[]" class="harga" value="0">
+            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
+        </div>
+    </div>`;
     }
+
 
     function initializeSelect2() {
         $('.select2').select2();
         $('.select2').off('select2:select').on('select2:select', function(e) {
+            const selectedValue = e.params.data.id;
+            const allSelects = document.querySelectorAll('.barang_id');
+            let duplicate = false;
+
+            allSelects.forEach(select => {
+                if (select !== e.target && select.value === selectedValue) {
+                    duplicate = true;
+                }
+            });
+
+            if (duplicate) {
+                // Reset select2 ke kosong
+                $(this).val('').trigger('change');
+
+                // Tampilkan toast
+                if (toastDuplicate) {
+                    const toast = new bootstrap.Toast(toastDuplicate);
+                    toast.show();
+                }
+
+                return;
+            }
+
             const selected = e.params.data.element;
             const harga = selected.getAttribute('data-harga') || 0;
             const row = e.target.closest('.barang-item');
@@ -77,6 +125,7 @@
             updateTotal();
         });
     }
+
 
     document.addEventListener('DOMContentLoaded', () => {
         const page = '<?= isset($page) ? $page : ''; ?>';
@@ -100,6 +149,7 @@
                 if (container) {
                     container.insertAdjacentHTML('beforeend', buatBarangRowHtml());
                     initializeSelect2();
+                    updateNomorBarang();
                 }
             });
         }
@@ -124,12 +174,14 @@
             if (e.target.matches('.hapusBarang')) {
                 e.target.closest('.barang-item').remove();
                 updateTotal();
+                updateNomorBarang();
             }
         });
 
         if (page === 'edit') {
             initializeSelect2();
             updateTotal();
+            updateNomorBarang();
         }
     });
 
@@ -150,11 +202,13 @@
 
         // Tanggal
         const tanggal = document.querySelector('[name="tanggal"]');
-        tanggal.addEventListener('input', function() {
-            if (this.value && !isNaN(Date.parse(this.value))) {
-                tanggal.classList.remove('is-invalid');
-            }
-        });
+        if (tanggal) {
+            tanggal.addEventListener('input', function() {
+                if (this.value && !isNaN(Date.parse(this.value))) {
+                    tanggal.classList.remove('is-invalid');
+                }
+            });
+        }
 
         // Barang & jumlah dinamis
         document.body.addEventListener('change', function(e) {
@@ -232,85 +286,6 @@
         });
     });
 
-    // document.addEventListener('DOMContentLoaded', () => {
-    //     const form = document.querySelector('form');
-    //     if (!form) return;
-
-    //     form.addEventListener('submit', function(e) {
-    //         let errors = [];
-
-    //         // Hapus class 'is-invalid' dari semua elemen sebelumnya
-    //         document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-    //         // Hapus alert error sebelumnya
-    //         document.querySelectorAll('.alert-danger').forEach(el => el.remove());
-
-    //         // Validasi pembeli
-    //         const pembeli = document.querySelector('[name="pembeli_id"]');
-    //         if (!pembeli.value) {
-    //             pembeli.classList.add('is-invalid');
-    //             // Select2 tambahan:
-    //             $(pembeli).next('.select2-container').find('.select2-selection').addClass('is-invalid');
-    //             errors.push('Pembeli harus dipilih.');
-    //         } else {
-    //             pembeli.classList.remove('is-invalid');
-    //             $(pembeli).next('.select2-container').find('.select2-selection').removeClass('is-invalid');
-    //         }
-
-    //         // Validasi tanggal
-    //         const tanggal = document.querySelector('[name="tanggal"]');
-    //         if (!tanggal || !tanggal.value.trim() || isNaN(Date.parse(tanggal.value))) {
-    //             tanggal.classList.add('is-invalid');
-    //             errors.push('Tanggal transaksi harus diisi dengan format yang benar.');
-    //         } else {
-    //             tanggal.classList.remove('is-invalid');
-    //         }
-
-    //         // Validasi barang
-    //         const barangItems = document.querySelectorAll('.barang-item');
-    //         if (barangItems.length === 0) {
-    //             errors.push('Minimal satu barang harus ditambahkan.');
-    //         }
-
-    //         barangItems.forEach((item, index) => {
-    //             const barangSelect = item.querySelector('.barang_id');
-    //             const jumlahInput = item.querySelector('.jumlah');
-
-    //             if (!barangSelect || !barangSelect.value.trim()) {
-    //                 barangSelect.classList.add('is-invalid');
-    //                 // Select2 barang
-    //                 $(barangSelect).next('.select2-container').find('.select2-selection').addClass('is-invalid');
-    //                 errors.push(`Barang ke-${index + 1} harus dipilih.`);
-    //             } else {
-    //                 barangSelect.classList.remove('is-invalid');
-    //                 $(barangSelect).next('.select2-container').find('.select2-selection').removeClass('is-invalid');
-    //             }
-
-    //             const jumlah = parseInt(jumlahInput?.value);
-    //             if (!jumlah || jumlah < 1) {
-    //                 jumlahInput.classList.add('is-invalid');
-    //                 errors.push(`Jumlah barang ke-${index + 1} harus minimal 1.`);
-    //             } else {
-    //                 jumlahInput.classList.remove('is-invalid');
-    //             }
-    //         });
-
-    //         // Tampilkan alert jika ada error
-    //         if (errors.length > 0) {
-    //             e.preventDefault(); // Hentikan submit form
-
-    //             const cardBody = document.querySelector('.card-body');
-    //             const errorHtml = `
-    //             <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-    //                 ${errors.map(msg => `<div>${msg}</div>`).join('')}
-    //                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    //             </div>
-    //         `;
-    //             cardBody.insertAdjacentHTML('afterbegin', errorHtml);
-    //         }
-    //     });
-    // });
-
     $(document).ready(function() {
         $('#datatable').DataTable({
             destroy: true
@@ -333,8 +308,22 @@
         }, 4000);
     });
 </script>
+<!-- Toast Error Duplicate -->
+<div class="position-fixed top-50 start-50 translate-middle" style="z-index: 1055;">
+    <div id="toastDuplicate" class="toast align-items-center text-bg-danger border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Barang sudah dipilih di baris lain. Silakan pilih barang lain.
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
 
 
+</body>
+
+</html>
 
 </body>
 

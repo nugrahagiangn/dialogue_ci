@@ -91,7 +91,7 @@ class Transaksi extends CI_Controller
         }
 
         if (!empty($errors)) {
-            $this->session->set_flashdata('error_message', implode('<br>', $errors));
+            $this->session->set_flashdata('error_message', $errors);
 
             // Data untuk repopulasi form
             $data['pembeli'] = $this->Pembeli_model->get_pembeli();

@@ -14,10 +14,9 @@
                     </div>
                 <?php endif; ?>
 
-                <form action="<?php echo site_url('transaksi/update/' . $transaksi->id_transaksi); ?>" method="post">
+                <form action="<?= site_url('transaksi/update/' . $transaksi->id_transaksi); ?>" method="post">
                     <div class="mb-3">
-                        <label for="id_transaksi" class="form-label">Kode Transaksi : <span><?php echo $transaksi->id_transaksi; ?></span></label>
-
+                        <label class="form-label">Kode Transaksi : <span><?= $transaksi->id_transaksi; ?></span></label>
                     </div>
                     <div class="mb-3">
                         <label for="tanggal" class="form-label">Tanggal Transaksi</label>
@@ -28,20 +27,30 @@
                         <select name="pembeli_id" class="form-select select2">
                             <option value="" disabled>-- Pilih Pembeli --</option>
                             <?php foreach ($pembeli as $p): ?>
-                                <option value="<?= $p->id; ?>" <?= ($p->id == $transaksi->pembeli_id) ? 'selected' : ''; ?>><?= $p->nama; ?></option>
+                                <option value="<?= $p->id; ?>" <?= ($p->id == $transaksi->pembeli_id) ? 'selected' : ''; ?>>
+                                    <?= $p->nama; ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
+
                     <div class="mb-3">
                         <label class="form-label">Barang & Jumlah</label>
                         <div id="barangContainerEdit">
                             <?php foreach ($detail as $detail): ?>
                                 <div class="barang-item row g-2 mb-2 align-items-end">
-                                    <div class="col-md-6">
-                                        <select name="barang_ids[]" class="form-select barang_id">
+                                    <div class="col-md-1 text-center">
+                                        <span class="badge bg-secondary form-number">1</span>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <select name="barang_ids[]" class="form-select barang_id select2">
                                             <option value="">-- Pilih Barang --</option>
                                             <?php foreach ($barang as $b): ?>
-                                                <option value="<?= $b->id; ?>" <?= ($b->id == $detail->barang_id) ? 'selected' : ''; ?> data-harga="<?= $b->harga ?>" data-nama="<?= $b->nama ?>"><?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)</option>
+                                                <option value="<?= $b->id; ?>"
+                                                    <?= ($b->id == $detail->barang_id) ? 'selected' : ''; ?>
+                                                    data-harga="<?= $b->harga ?>" data-nama="<?= $b->nama ?>">
+                                                    <?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)
+                                                </option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
@@ -70,17 +79,16 @@
                         <label for="keterangan" class="form-label">Keterangan</label>
                         <textarea name="keterangan" class="form-control" rows="3"><?= $transaksi->keterangan; ?></textarea>
                     </div>
+
                     <input type="hidden" name="id_transaksi" value="<?= $transaksi->id_transaksi ?>">
 
                     <button type="submit" class="btn btn-success">Simpan</button>
-                    <a href="<?php echo site_url('transaksi'); ?>" class="btn btn-secondary">Kembali</a>
+                    <a href="<?= site_url('transaksi'); ?>" class="btn btn-secondary">Kembali</a>
                 </form>
 
             </div>
         </div>
     </div>
-
 </main>
-
 
 <?php $this->load->view('layout/footer'); ?>

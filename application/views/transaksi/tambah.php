@@ -45,7 +45,10 @@
                             <?php if (isset($old['barang_ids'])): ?>
                                 <?php foreach ($old['barang_ids'] as $i => $barang_id): ?>
                                     <div class="barang-item row g-2 mb-2 align-items-end">
-                                        <div class="col-md-6">
+                                        <div class="col-md-1 text-center">
+                                            <span class="badge bg-secondary form-number">1</span>
+                                        </div>
+                                        <div class="col-md-5">
                                             <select name="barang_ids[]" class="form-select barang_id select2">
                                                 <option value="">-- Pilih Barang --</option>
                                                 <?php foreach ($barang as $b): ?>
@@ -72,14 +75,6 @@
 
                         <button type="button" id="tambahBarang" class="btn btn-primary btn-sm">Tambah Barang</button>
 
-                        <!-- <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang">+ Tambah Barang</button> -->
-                        <div id="totalHargaContainer" class="card mt-3 d-none">
-                            <div class="card-body">
-                                <h6>Rincian Barang</h6>
-                                <ul class="list-group mb-3" id="listTotalBarang"></ul>
-                                <h5 class="text-end">Subtotal: <span id="subtotalDisplay" class="text-success">Rp 0</span></h5>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- <div id="barangContainer"></div> -->
