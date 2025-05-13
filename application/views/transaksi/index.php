@@ -10,12 +10,11 @@ $tbody = '';
 $no = 1;
 if (!empty($transaksi)) {
     foreach ($transaksi as $row) {
-
         $tbody .= '<tr>';
         $tbody .= '<td>' . $no++ . '</td>';
         $tbody .= '<td>' . $row->id_transaksi . '</td>';
         $tbody .= '<td>' . $row->nama_pembeli . '</td>';
-        $tbody .= '<td>' . $row->tgl . '</td>';
+        $tbody .= '<td data-filter="' . $row->tgl_iso . '">' . $row->tgl . '</td>';
         $tbody .= '<td>' . 'Rp. ' . number_format($row->total_bayar, 0, ',', '.');
         $row->total_bayar . '</td>';
 

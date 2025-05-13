@@ -24,30 +24,72 @@
         });
     }
 
-
-
     function updateTotal() {
+        let totalSebelumDiskon = 0;
         let subtotal = 0;
         let list = '';
+
         document.querySelectorAll('.barang-item').forEach(el => {
-            const harga = parseInt(el.querySelector('.harga')?.value || 0);
+            const harga = parseInt(el.querySelector('.harga')?.value || 0, 10);
             const jumlah = parseInt(el.querySelector('.jumlah')?.value || 0);
+            const persenDiskon = parseFloat(el.querySelector('.persen')?.value || 0);
+            const rpDiskon = parseInt(el.querySelector('.rp')?.value || 0);
             const nama = el.querySelector('.barang_id option:checked')?.dataset.nama || '';
-            const total = harga * jumlah;
+
             if (jumlah > 0 && harga > 0) {
-                subtotal += total;
-                list += `<li class="list-group-item d-flex justify-content-between">${nama} (${jumlah} x ${formatRupiah(harga)}) <strong>${formatRupiah(total)}</strong></li>`;
+                const total = harga * jumlah;
+                totalSebelumDiskon += total;
+
+                const diskonPersen = (persenDiskon / 100) * total;
+                let totalSetelahDiskon = total - diskonPersen - rpDiskon;
+                totalSetelahDiskon = totalSetelahDiskon < 0 ? 0 : totalSetelahDiskon;
+
+                subtotal += totalSetelahDiskon;
+
+                list += `<li class="list-group-item d-flex justify-content-between">
+                ${nama} (${jumlah} x ${formatRupiah(harga)})
+                <div class="text-end">
+                    <small class="text-muted">Disc: ${persenDiskon}% + ${formatRupiah(rpDiskon)}</small><br>
+                    <strong>${formatRupiah(totalSetelahDiskon)}</strong>
+                </div>
+            </li>`;
             }
         });
 
-        const subtotalDisplay = document.getElementById('subtotalDisplay');
+        const diskonPersenGlobal = parseFloat(document.querySelector('.diskon_persen')?.value || 0);
+        const diskonRupiahGlobal = parseInt(document.querySelector('.diskon_rupiah')?.value || 0);
+
+        // Hitung total akhir setelah semua diskon
+        let totalSetelahDiskonGlobal = subtotal;
+
+        if (diskonPersenGlobal > 0) {
+            totalSetelahDiskonGlobal -= subtotal * (diskonPersenGlobal / 100);
+        }
+        if (diskonRupiahGlobal > 0) {
+            totalSetelahDiskonGlobal -= diskonRupiahGlobal;
+        }
+        totalSetelahDiskonGlobal = totalSetelahDiskonGlobal < 0 ? 0 : totalSetelahDiskonGlobal;
+
+        // Update ke elemen DOM
+        const subtotalDisplay = document.getElementById('subtotalDisplay'); // ➜ Sekarang tampilkan total awal
         const listTotalBarang = document.getElementById('listTotalBarang');
         const totalHargaContainer = document.getElementById('totalHargaContainer');
+        const jumlahBayarDisplay = document.getElementById('jumlahBayarDisplay');
 
-        if (subtotalDisplay && listTotalBarang && totalHargaContainer) {
+        if (subtotalDisplay) {
+            subtotalDisplay.innerText = formatRupiah(totalSebelumDiskon); // 💡 ganti ke total sebelum diskon
+        }
+
+        if (listTotalBarang) {
             listTotalBarang.innerHTML = list;
-            subtotalDisplay.innerText = formatRupiah(subtotal);
-            totalHargaContainer.classList.toggle('d-none', subtotal === 0);
+        }
+
+        if (totalHargaContainer) {
+            totalHargaContainer.classList.toggle('d-none', totalSebelumDiskon === 0);
+        }
+
+        if (jumlahBayarDisplay) {
+            jumlahBayarDisplay.innerText = formatRupiah(totalSetelahDiskonGlobal);
         }
     }
 
@@ -60,16 +102,22 @@
         return `
     <div class="barang-item row g-2 mb-2 align-items-end">
         <div class="col-md-1 text-center">
-                                        <span class="badge bg-secondary form-number">1</span>
-                                    </div>
-                                    <div class="col-md-5">
+            <span class="badge bg-secondary form-number">1</span>
+        </div>
+        <div class="col-md-3">
             <select name="barang_ids[]" class="form-select barang_id select2">
                 <option value="">-- Pilih Barang --</option>
                 ${options}
             </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <input type="number" name="jumlahs[]" class="form-control jumlah" value="1" min="1">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="persens[]" class="form-control persen"  min="0">
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="rps[]" class="form-control rp"  min="0">
         </div>
         <div class="col-md-2">
             <input type="hidden" name="hargas[]" class="harga" value="0">
@@ -77,7 +125,6 @@
         </div>
     </div>`;
     }
-
 
     function initializeSelect2() {
         $('.select2').select2();
@@ -116,23 +163,26 @@
         });
     }
 
-
     document.addEventListener('DOMContentLoaded', () => {
         const page = '<?= isset($page) ? $page : ''; ?>';
         const tambahBtn = document.getElementById('tambahBarang');
         const containerId = page === 'edit' ? 'barangContainerEdit' : 'barangContainer';
         const initialContainer = document.getElementById(containerId);
 
+        // Halaman tambah: jika ada barangList & baris awal sudah muncul, jalankan Select2 & total
         if (page === 'tambah' && barangList.length && document.querySelectorAll('.barang-item').length > 0) {
             initializeSelect2();
             updateTotal();
         }
 
+        // Tambahkan satu baris kosong default (khusus tambah)
         if (page === 'tambah' && initialContainer) {
             initialContainer.insertAdjacentHTML('beforeend', buatBarangRowHtml());
             initializeSelect2();
+            updateNomorBarang();
         }
 
+        // Tambah baris barang baru
         if (tambahBtn) {
             tambahBtn.addEventListener('click', () => {
                 const container = document.getElementById(containerId);
@@ -144,22 +194,35 @@
             });
         }
 
+        // Saat select barang berubah: ambil harga dan isi input hidden harga
         document.addEventListener('change', e => {
+
             if (e.target.matches('.barang_id')) {
                 const harga = e.target.selectedOptions[0]?.dataset.harga || 0;
                 const hargaInput = e.target.closest('.barang-item')?.querySelector('.harga');
                 if (hargaInput) hargaInput.value = harga;
                 updateTotal();
             }
-            if (e.target.matches('.jumlah')) updateTotal();
+
+            if (e.target.matches('.jumlah') || e.target.matches('.diskon_persen') || e.target.matches('.diskon_rupiah')) {
+                updateTotal();
+            }
         });
 
+        // Update total saat inputan jumlah atau diskon berubah
         ['input', 'keyup', 'paste'].forEach(event => {
             document.addEventListener(event, e => {
-                if (e.target.matches('.jumlah')) setTimeout(updateTotal, 0);
+                if (
+                    e.target.matches('.jumlah') ||
+                    e.target.matches('.persen') ||
+                    e.target.matches('.rp')
+                ) {
+                    setTimeout(updateTotal, 0);
+                }
             });
         });
 
+        // Hapus baris barang
         document.addEventListener('click', e => {
             if (e.target.matches('.hapusBarang')) {
                 e.target.closest('.barang-item').remove();
@@ -168,12 +231,44 @@
             }
         });
 
+        // EDIT MODE: Atur harga, trigger semua field agar updateTotal bekerja
         if (page === 'edit') {
+            // Set input harga dari data-harga
+            document.querySelectorAll('.barang-item').forEach(row => {
+                const select = row.querySelector('.barang_id');
+                const hargaInput = row.querySelector('.harga');
+                const selectedOption = select?.selectedOptions[0];
+                const harga = selectedOption?.dataset.harga || 0;
+                if (hargaInput) hargaInput.value = harga;
+            });
+
             initializeSelect2();
-            updateTotal();
             updateNomorBarang();
+
+            // Trigger event input dan change di semua input relevan
+            const allTriggerInputs = document.querySelectorAll(
+                '.barang-item .jumlah, .barang-item .persen, .barang-item .diskon_persen'
+            );
+
+            allTriggerInputs.forEach(input => {
+                input.dispatchEvent(new Event('input', {
+                    bubbles: true
+                }));
+                input.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            });
+
+            // Jalankan update total setelah semua input ready
+            setTimeout(() => {
+                updateTotal();
+            }, 100);
         }
+
     });
+
+
+
 
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.querySelector('form');
@@ -225,6 +320,13 @@
         form.addEventListener('submit', function(e) {
             let errors = [];
 
+            const diskonPersenGlobal = parseFloat(document.querySelector('.diskon_persen')?.value || 0);
+            if (diskonPersenGlobal < 0 || diskonPersenGlobal > 100) {
+                document.querySelector('.diskon_persen').classList.add('is-invalid');
+                errors.push("Diskon persen global harus antara 0 - 100.");
+            }
+
+
             document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
             document.querySelectorAll('.alert-danger').forEach(el => el.remove());
 
@@ -255,7 +357,7 @@
                 }
 
                 const jumlah = parseInt(jumlahInput?.value);
-                if (!jumlah || jumlah < 1) {
+                if (isNaN(jumlah) || jumlah < 1) {
                     jumlahInput.classList.add('is-invalid');
                     errors.push(`Jumlah barang ke-${index + 1} harus minimal 1.`);
                 }
@@ -277,11 +379,36 @@
     });
 
     $(document).ready(function() {
-        $('#datatable').DataTable({
-            destroy: true
+
+        const today = new Date();
+        const awalBulan = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Set nilai awal input tanggal filter
+        $('#minDate').val(formatDate(awalBulan));
+        $('#maxDate').val(formatDate(today));
+
+        // Inisialisasi flatpickr khusus untuk #minDate dan #maxDate
+        flatpickr('#minDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            defaultDate: formatDate(awalBulan)
         });
 
-        flatpickr(".datepicker", {
+        flatpickr('#maxDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            defaultDate: formatDate(today)
+        });
+
+        // Inisialisasi flatpickr untuk input lain yang pakai waktu
+        flatpickr('.datepicker:not(#minDate):not(#maxDate)', {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
@@ -289,6 +416,33 @@
             defaultDate: new Date()
         });
 
+        let minDate = awalBulan;
+        let maxDate = today;
+
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            const row = settings.aoData[dataIndex].nTr;
+            const tglStr = $(row).find('td:eq(3)').data('filter'); // Kolom ke-4
+            if (!tglStr) return true;
+
+            const tgl = new Date(tglStr);
+            if ((minDate && tgl < minDate) || (maxDate && tgl > maxDate)) {
+                return false;
+            }
+            return true;
+        });
+
+        $('#minDate, #maxDate').on('change', function() {
+            minDate = $('#minDate').val() ? new Date($('#minDate').val()) : null;
+            maxDate = $('#maxDate').val() ? new Date($('#maxDate').val()) : null;
+            table.draw();
+        });
+
+        const table = $('#datatable').DataTable({
+            destroy: true
+        });
+
+
+        // Auto hide alert
         setTimeout(() => {
             const alert = document.querySelector('.alert');
             if (alert) {

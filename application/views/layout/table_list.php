@@ -6,8 +6,8 @@
     <a href="<?= site_url($segment . '/tambah'); ?>" class="btn btn-primary">
         + Tambah <?= ucfirst($segment); ?>
     </a>
-
 </div>
+
 <?php if ($this->session->flashdata('success_message')): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <?= $this->session->flashdata('success_message'); ?>
@@ -17,6 +17,20 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
+        <?php if ($segment === 'transaksi'): ?>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label>Dari Tanggal</label>
+                    <input type="text" id="minDate" class="form-control datepicker" placeholder="YYYY-MM-DD">
+                </div>
+                <div class="col-md-3">
+                    <label>Sampai Tanggal</label>
+                    <input type="text" id="maxDate" class="form-control datepicker" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+
+        <?php endif; ?>
+
         <div class="table-responsive">
             <table id="datatable" class="table table-bordered table-striped">
                 <thead class="table-dark">

@@ -36,41 +36,68 @@
 
                     <div class="mb-3">
                         <label class="form-label">Barang & Jumlah</label>
-                        <div id="barangContainerEdit">
-                            <?php foreach ($detail as $detail): ?>
-                                <div class="barang-item row g-2 mb-2 align-items-end">
-                                    <div class="col-md-1 text-center">
-                                        <span class="badge bg-secondary form-number">1</span>
+                        <table class="table table-bordered align-middle text-center" id="barangTable" style="table-layout: fixed; width: 100%;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 5%;">No</th>
+                                    <th style="width: 30%;">Nama Barang</th>
+                                    <th style="width: 15%;">Jumlah</th>
+                                    <th style="width: 15%;">Disc. %</th>
+                                    <th style="width: 15%;">Disc. Rp</th>
+                                    <th style="width: 20%;">Aksi</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <tbody>
+                            <tr>
+                                <?php foreach ($detail as $index => $detail): ?>
+                                    <div class="barang-item row g-2 mb-2 align-items-end">
+                                        <div class="col-md-1 text-center">
+                                            <span class="badge bg-secondary form-number"><?= $index + 1; ?></span>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select name="barang_ids[]" class="form-select barang_id select2">
+                                                <option value="">-- Pilih Barang --</option>
+                                                <?php foreach ($barang as $b): ?>
+                                                    <option value="<?= $b->id; ?>"
+                                                        <?= ($b->id == $detail->barang_id) ? 'selected' : ''; ?>
+                                                        data-harga="<?= $b->harga ?>" data-nama="<?= $b->nama ?>">
+                                                        <?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $detail->jumlah; ?>" min="1">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="number" name="persens[]" class="form-control persen" value="<?= $detail->disc_persen; ?>" min="0">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="number" name="rps[]" class="form-control rp" value="<?= $detail->disc_rp ?? 0; ?>" min="0">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <input type="hidden" name="hargas[]" class="harga" value="0">
+                                            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-5">
-                                        <select name="barang_ids[]" class="form-select barang_id select2">
-                                            <option value="">-- Pilih Barang --</option>
-                                            <?php foreach ($barang as $b): ?>
-                                                <option value="<?= $b->id; ?>"
-                                                    <?= ($b->id == $detail->barang_id) ? 'selected' : ''; ?>
-                                                    data-harga="<?= $b->harga ?>" data-nama="<?= $b->nama ?>">
-                                                    <?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $detail->jumlah; ?>" min="1">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <input type="hidden" name="hargas[]" class="harga" value="<?= $detail->total; ?>">
-                                        <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+                                <?php endforeach; ?>
+                            </tr>
+                            <tr>
+                                <div id="barangContainerEdit"></div>
+                            </tr>
+                        </tbody>
+
                         <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang">+ Tambah Barang</button>
 
                         <div id="totalHargaContainer" class="card mt-3 d-none">
                             <div class="card-body">
-                                <h6>Rincian Barang</h6>
+                                <h6>Total Harga per Barang</h6>
                                 <ul class="list-group mb-3" id="listTotalBarang"></ul>
                                 <h5 class="text-end">Subtotal: <span id="subtotalDisplay" class="text-success">Rp 0</span></h5>
+                                <div id="jumlahBayarContainer" class="mt-3">
+                                    <h5 class="text-end">Jumlah Bayar: <span id="jumlahBayarDisplay" class="text-info">Rp 0</span></h5>
+                                </div>
                             </div>
                         </div>
                     </div>

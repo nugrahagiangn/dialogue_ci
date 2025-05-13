@@ -4,7 +4,7 @@ class Transaksi_model extends CI_Model
 
     public function get_all_transaksi()
     {
-        $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli, TO_CHAR(t.tanggal , \'DD Mon YYYY - HH24:MI:SS\') AS tgl ');
+        $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli, TO_CHAR(t.tanggal , \'DD FMMonth YYYY - HH24:MI:SS\') AS tgl, TO_CHAR(t.tanggal , \'YYYY-MM-DD\') AS tgl_iso  ');
         $this->db->from('transaksi t');
         $this->db->join('pembeli p', 't.pembeli_id = p.id');
 
@@ -16,7 +16,6 @@ class Transaksi_model extends CI_Model
                      FROM detail_transaksi
                      JOIN barang ON barang.id = detail_transaksi.barang_id
                      GROUP BY transaksi_id) dt", 'dt.transaksi_id = t.id_transaksi');
-
         return $this->db->get()->result();
     }
 
@@ -50,6 +49,8 @@ class Transaksi_model extends CI_Model
         $barang_ids = $data['barang_ids'];
         $jumlahs    = $data['jumlahs'];
         $hargas     = $data['hargas'];
+        $persens     = $data['persens'];
+        $rps     = $data['rps'];
 
         $transaksi_id = $this->generate_id_transaksi();
 
@@ -59,6 +60,8 @@ class Transaksi_model extends CI_Model
         foreach ($barang_ids as $index => $barang_id) {
             $jumlah = (int) ($jumlahs[$index] ?? 1);
             $harga  = (int) ($hargas[$index] ?? 0);
+            $persen  = (int) ($persens[$index] ?? 0);
+            $rp  = (int) ($rps[$index] ?? 0);
             $total  = $jumlah * $harga;
 
             $total_bayar += $total;
@@ -68,6 +71,8 @@ class Transaksi_model extends CI_Model
                 'barang_id'    => $barang_id,
                 'jumlah'       => $jumlah,
                 'total'        => $total,
+                'disc_rp'        => $rp,
+                'disc_persen'        => $persen,
             ];
         }
 
@@ -105,7 +110,7 @@ class Transaksi_model extends CI_Model
 
     public function get_by_id($id)
     {
-        $this->db->select("*, TO_CHAR(tanggal, 'DD Mon YYYY') AS tgl");
+        $this->db->select("*, TO_CHAR(tanggal, 'DD FMMonth YYYY') AS tgl");
         $this->db->from('transaksi');
         $this->db->where('id_transaksi', $id);
         return $this->db->get()->row();
@@ -141,6 +146,8 @@ class Transaksi_model extends CI_Model
         foreach ($data['barang_ids'] as $i => $barang_id) {
             $jumlah = (int) $data['jumlahs'][$i];
             $harga  = (int) $data['hargas'][$i];
+            $rp  = (int) $data['rps'][$i];
+            $persen  = (int) $data['persens'][$i];
             $total  = $jumlah * $harga;
             $total_bayar += $total;
 
@@ -148,7 +155,9 @@ class Transaksi_model extends CI_Model
                 'transaksi_id' => $id,
                 'barang_id'    => $barang_id,
                 'jumlah'       => $jumlah,
-                'total'        => $total
+                'total'        => $total,
+                'disc_rp'        => $rp,
+                'disc_persen'        => $persen
             ];
         }
 

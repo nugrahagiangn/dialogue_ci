@@ -23,36 +23,6 @@ class Transaksi extends CI_Controller
         $this->load->view('transaksi/tambah', $data);
     }
 
-    // public function simpan()
-    // {
-    //     $pembeli_id  = $this->input->post('pembeli_id');
-    //     $tanggal     = $this->input->post('tanggal');
-    //     $keterangan  = $this->input->post('keterangan');
-
-    //     $barang_ids  = $this->input->post('barang_ids');
-    //     $jumlahs     = $this->input->post('jumlahs');
-    //     $hargas      = $this->input->post('hargas');
-
-    //     if (!empty($barang_ids) && is_array($barang_ids)) {
-
-    //         $transaksiData = [
-    //             'pembeli_id' => $pembeli_id,
-    //             'tanggal'    => $tanggal,
-    //             'keterangan' => $keterangan,
-    //             'barang_ids' => $barang_ids,
-    //             'jumlahs'    => $jumlahs,
-    //             'hargas'     => $hargas
-    //         ];
-
-    //         $this->Transaksi_model->simpan_transaksi($transaksiData);
-
-    //         $this->session->set_flashdata('success_message', 'Transaksi berhasil disimpan.');
-    //     } else {
-    //         $this->session->set_flashdata('error_message', 'Pilih minimal satu barang dan jumlah.');
-    //     }
-
-    //     redirect('transaksi');
-    // }
 
     public function simpan()
     {
@@ -62,6 +32,8 @@ class Transaksi extends CI_Controller
         $barang_ids  = $this->input->post('barang_ids');
         $jumlahs     = $this->input->post('jumlahs');
         $hargas      = $this->input->post('hargas');
+        $persens = $this->input->post('persens');
+        $rps = $this->input->post('rps');
 
         // Validasi dasar
         $errors = [];
@@ -87,6 +59,20 @@ class Transaksi extends CI_Controller
                 if (empty($hargas[$i]) || $hargas[$i] < 1) {
                     $errors[] = "Harga barang ke-" . ($i + 1) . " tidak valid.";
                 }
+                if (isset($jumlahs[$i], $hargas[$i], $persens[$i], $rps[$i])) {
+                    $jumlah = (int) $jumlahs[$i];
+                    $harga = (float) $hargas[$i];
+                    $persen = (float) $persens[$i];
+                    $rp = (float) $rps[$i];
+
+                    $total = $jumlah * $harga;
+                    $diskon_persen = ($persen / 100) * $total;
+                    $total_akhir = $total - $diskon_persen - $rp;
+
+                    if ($total_akhir < 0) {
+                        $errors[] = "Diskon barang ke-" . ($i + 1) . " terlalu besar.";
+                    }
+                }
             }
         }
 
@@ -102,7 +88,9 @@ class Transaksi extends CI_Controller
                 'keterangan' => $keterangan,
                 'barang_ids' => $barang_ids,
                 'jumlahs' => $jumlahs,
-                'hargas' => $hargas
+                'hargas' => $hargas,
+                'persens'    => $persens,
+                'rps'        => $rps
             ];
             $data['page'] = 'tambah';
 
@@ -117,7 +105,9 @@ class Transaksi extends CI_Controller
             'keterangan' => $keterangan,
             'barang_ids' => $barang_ids,
             'jumlahs'    => $jumlahs,
-            'hargas'     => $hargas
+            'hargas'     => $hargas,
+            'persens'    => $persens,
+            'rps'        => $rps
         ];
 
         $this->Transaksi_model->simpan_transaksi($transaksiData);

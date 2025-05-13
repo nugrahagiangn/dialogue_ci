@@ -41,37 +41,24 @@
 
                     <div class="mb-3">
                         <label class="form-label">Barang & Jumlah</label>
-                        <div id="barangContainer">
-                            <?php if (isset($old['barang_ids'])): ?>
-                                <?php foreach ($old['barang_ids'] as $i => $barang_id): ?>
-                                    <div class="barang-item row g-2 mb-2 align-items-end">
-                                        <div class="col-md-1 text-center">
-                                            <span class="badge bg-secondary form-number">1</span>
-                                        </div>
-                                        <div class="col-md-5">
-                                            <select name="barang_ids[]" class="form-select barang_id select2">
-                                                <option value="">-- Pilih Barang --</option>
-                                                <?php foreach ($barang as $b): ?>
-                                                    <option value="<?= $b->id; ?>"
-                                                        data-harga="<?= $b->harga; ?>"
-                                                        data-nama="<?= $b->nama; ?>"
-                                                        <?= $barang_id == $b->id ? 'selected' : ''; ?>>
-                                                        <?= $b->nama; ?> (Rp <?= number_format($b->harga, 0, ',', '.'); ?>)
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <input type="number" name="jumlahs[]" class="form-control jumlah" value="<?= $old['jumlahs'][$i]; ?>" min="1">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <input type="hidden" name="hargas[]" class="harga" value="<?= $old['hargas'][$i]; ?>">
-                                            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                        <div id="barangContainer" class="table-responsive">
+                            <table class="table table-bordered align-middle text-center" id="barangTable" style="table-layout: fixed; width: 100%;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 5%;">No</th>
+                                        <th style="width: 30%;">Nama Barang</th>
+                                        <th style="width: 15%;">Jumlah</th>
+                                        <th style="width: 15%;">Disc. %</th>
+                                        <th style="width: 15%;">Disc. Rp</th>
+                                        <th style="width: 20%;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="barangContainer">
+                                    <!-- Baris-baris barang dimuat di sini -->
+                                </tbody>
+                            </table>
                         </div>
+
 
                         <button type="button" id="tambahBarang" class="btn btn-primary btn-sm">Tambah Barang</button>
 
@@ -79,13 +66,16 @@
 
                     <!-- <div id="barangContainer"></div> -->
 
-                    <div id="jumlahContainer"></div>
+                    <!-- <div id="jumlahContainer"></div> -->
 
                     <div id="totalHargaContainer" class="card mt-3 d-none">
                         <div class="card-body">
                             <h6>Total Harga per Barang</h6>
                             <ul class="list-group mb-3" id="listTotalBarang"></ul>
                             <h5 class="text-end">Subtotal: <span id="subtotalDisplay" class="text-success">Rp 0</span></h5>
+                            <div id="jumlahBayarContainer" class="mt-3">
+                                <h5 class="text-end">Jumlah Bayar (diskon) : <span id="jumlahBayarDisplay" class="text-info">Rp 0</span></h5>
+                            </div>
                         </div>
                     </div>
 
