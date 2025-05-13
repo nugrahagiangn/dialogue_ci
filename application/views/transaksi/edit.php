@@ -13,6 +13,15 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php endif; ?>
+                <?php if (!empty($error_message)): ?>
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            <?php foreach ($error_message as $msg): ?>
+                                <li><?= $msg ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
 
                 <form action="<?= site_url('transaksi/update/' . $transaksi->id_transaksi); ?>" method="post">
                     <div class="mb-3">

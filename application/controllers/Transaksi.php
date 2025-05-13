@@ -177,10 +177,30 @@ class Transaksi extends CI_Controller
 
     public function update($id)
     {
-        $this->Transaksi_model->update_transaksi($this->input->post());
+        $errors = [];
+        $postData = $this->input->post();
+
+        if (!$this->Transaksi_model->update_transaksi($postData, $errors)) {
+            // Gagal validasi, kembali ke form edit
+            $data['pembeli'] = $this->Pembeli_model->get_pembeli();
+            $data['barang']  = $this->Barang_model->get_all_barang();
+
+            $data['old'] = $postData;
+            $data['error_message'] = $errors;
+            $data['page'] = 'edit';
+
+            // Perlu juga isi ulang transaksi dan detail
+            $data['transaksi'] = $this->Transaksi_model->get_by_id($id);
+            $data['detail'] = $this->Transaksi_model->get_detail_by_transaksi($id);
+
+            $this->load->view('transaksi/edit', $data);
+            return;
+        }
+
         $this->session->set_flashdata('success_message', 'Transaksi berhasil diperbarui.');
         redirect('transaksi');
     }
+
 
     public function hapus($id)
     {

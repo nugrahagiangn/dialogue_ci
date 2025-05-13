@@ -26,26 +26,52 @@
                             <th>Nama Barang</th>
                             <th>Harga</th>
                             <th>Jumlah</th>
-                            <th>Total</th>
+                            <th>Diskon (%)</th>
+                            <th>Diskon (Rp)</th>
+                            <th>Total Setelah Diskon</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $subtotal = 0; ?>
+                        <?php
+                        $total_tanpa_diskon = 0;
+                        $total_diskon = 0;
+                        $total_bayar = 0;
+                        ?>
                         <?php foreach ($detail as $item): ?>
+                            <?php
+                            $harga = $item->barang->harga;
+                            $jumlah = $item->jumlah;
+                            $diskon_persen = $item->disc_persen ?? 0;
+                            $diskon_rp = $item->disc_rp ?? 0;
+
+                            $total_awal = $harga * $jumlah;
+                            $potongan_persen = ($diskon_persen / 100) * $total_awal;
+                            $total_diskon_item = $potongan_persen + $diskon_rp;
+                            $total_setelah_diskon = $total_awal - $total_diskon_item;
+
+                            $total_tanpa_diskon += $total_awal;
+                            $total_diskon += $total_diskon_item;
+                            $total_bayar += $total_setelah_diskon;
+                            ?>
                             <tr>
-                                <td><?= $item->barang->nama; ?></td> <!-- Menampilkan nama barang -->
-                                <td>Rp <?= number_format($item->barang->harga, 0, ',', '.'); ?></td> <!-- Menampilkan harga barang -->
-                                <td><?= $item->jumlah; ?></td>
-                                <td>Rp <?= number_format($item->total, 0, ',', '.'); ?></td>
+                                <td><?= $item->barang->nama; ?></td>
+                                <td>Rp <?= number_format($harga, 0, ',', '.'); ?></td>
+                                <td><?= $jumlah; ?></td>
+                                <td><?= $diskon_persen; ?>%</td>
+                                <td>Rp <?= number_format($diskon_rp, 0, ',', '.'); ?></td>
+                                <td>Rp <?= number_format($total_setelah_diskon, 0, ',', '.'); ?></td>
                             </tr>
-                            <?php $subtotal += $item->total; ?>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
 
-                <h5 class="text-end">Subtotal: Rp <?= number_format($subtotal, 0, ',', '.'); ?></h5>
+                <div class="mt-4">
+                    <h5 class="text-end">Total Keseluruhan: <span class="text-dark">Rp <?= number_format($total_tanpa_diskon, 0, ',', '.'); ?></span></h5>
+                    <h5 class="text-end">Diskon yang Didapat Dalam Rp: <span class="text-danger">Rp <?= number_format($total_diskon, 0, ',', '.'); ?></span></h5>
+                    <h4 class="text-end">Total Bayar Setelah Diskon: <span class="text-success">Rp <?= number_format($total_bayar, 0, ',', '.'); ?></span></h4>
+                </div>
 
-                <div class="mb-3">
+                <div class="mb-3 mt-4">
                     <label for="keterangan" class="form-label">Keterangan</label>
                     <textarea class="form-control" rows="3" readonly><?= $transaksi->keterangan; ?></textarea>
                 </div>

@@ -129,11 +129,39 @@ class Transaksi_model extends CI_Model
     }
 
 
-    public function update_transaksi($data)
+    public function update_transaksi($data, &$errors = [])
     {
         $id = $data['id_transaksi'];
         $total_bayar = 0;
 
+        $barang_ids = $data['barang_ids'];
+        $jumlahs    = $data['jumlahs'];
+        $hargas     = $data['hargas'];
+        $persens    = $data['persens'];
+        $rps        = $data['rps'];
+
+        // Validasi barang
+        foreach ($barang_ids as $i => $barang_id) {
+            $jumlah = (int) $jumlahs[$i];
+            $harga  = (float) $hargas[$i];
+            $persen = (float) $persens[$i];
+            $rp     = (float) $rps[$i];
+
+            $total_awal = $jumlah * $harga;
+            $diskon_persen = ($persen / 100) * $total_awal;
+            $total_diskon = $diskon_persen + $rp;
+            $total_setelah_diskon = $total_awal - $total_diskon;
+
+            if ($total_setelah_diskon < 0) {
+                $errors[] = "Diskon barang ke-" . ($i + 1) . " terlalu besar.";
+            }
+        }
+
+        if (!empty($errors)) {
+            return false; // Gagal validasi
+        }
+
+        // Proses update jika valid
         $this->db->where('id_transaksi', $id)->update('transaksi', [
             'pembeli_id'  => $data['pembeli_id'],
             'tanggal'     => $data['tanggal'],
@@ -143,27 +171,36 @@ class Transaksi_model extends CI_Model
         $this->db->delete('detail_transaksi', ['transaksi_id' => $id]);
 
         $items = [];
-        foreach ($data['barang_ids'] as $i => $barang_id) {
-            $jumlah = (int) $data['jumlahs'][$i];
-            $harga  = (int) $data['hargas'][$i];
-            $rp  = (int) $data['rps'][$i];
-            $persen  = (int) $data['persens'][$i];
-            $total  = $jumlah * $harga;
-            $total_bayar += $total;
+        foreach ($barang_ids as $i => $barang_id) {
+            $jumlah = (int) $jumlahs[$i];
+            $harga  = (float) $hargas[$i];
+            $persen = (float) $persens[$i];
+            $rp     = (float) $rps[$i];
+
+            $total_awal = $jumlah * $harga;
+            $diskon_persen = ($persen / 100) * $total_awal;
+            $total_diskon = $diskon_persen + $rp;
+            $total_setelah_diskon = $total_awal - $total_diskon;
+
+            $total_bayar += $total_setelah_diskon;
 
             $items[] = [
                 'transaksi_id' => $id,
                 'barang_id'    => $barang_id,
                 'jumlah'       => $jumlah,
-                'total'        => $total,
-                'disc_rp'        => $rp,
-                'disc_persen'        => $persen
+                'total'        => $total_setelah_diskon,
+                'disc_rp'      => $rp,
+                'disc_persen'  => $persen
             ];
         }
 
         $this->db->insert_batch('detail_transaksi', $items);
         $this->db->where('id_transaksi', $id)->update('transaksi', ['total_bayar' => $total_bayar]);
+
+        return true;
     }
+
+
 
     public function delete_transaksi($id)
     {
