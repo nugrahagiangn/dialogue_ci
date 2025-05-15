@@ -49,11 +49,9 @@ function format_tanggal_indonesia($datetime)
         }
     </style>
 
-
 </head>
 
 <body class="bg-light">
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">

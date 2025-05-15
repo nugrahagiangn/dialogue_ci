@@ -1,8 +1,6 @@
 <?php
 class Pembeli_model extends CI_Model
 {
-
-
     public function get_pembeli()
     {
         return $this->db
@@ -20,7 +18,6 @@ class Pembeli_model extends CI_Model
     {
         return $this->db->insert('pembeli', $data);
     }
-
 
     public function get_by_id($id)
     {

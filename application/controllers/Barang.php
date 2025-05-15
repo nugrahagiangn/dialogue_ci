@@ -34,14 +34,12 @@ class Barang extends CI_Controller
         redirect($redirect_to ?? 'barang');
     }
 
-
     public function edit($encoded_id)
     {
         $id = base64_decode(urldecode($encoded_id));
         $data['barang'] = $this->Barang_model->get_by_id($id);
         $this->load->view('barang/edit', $data);
     }
-
 
     public function update($id)
     {

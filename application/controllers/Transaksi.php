@@ -53,7 +53,6 @@ class Transaksi extends CI_Controller
         return $str;
     }
 
-
     public function tambah()
     {
         $data['transaksi'] = $this->Transaksi_model->get_all_transaksi(); // Ambil semua tanpa limit
@@ -155,7 +154,6 @@ class Transaksi extends CI_Controller
         redirect('transaksi');
     }
 
-
     public function edit($encoded_id)
     {
         $id = base64_decode(urldecode($encoded_id));
@@ -180,7 +178,6 @@ class Transaksi extends CI_Controller
 
         $this->load->view('transaksi/edit', $data);
     }
-
 
     public function detail($encoded_id)
     {
@@ -213,8 +210,6 @@ class Transaksi extends CI_Controller
         $this->load->view('transaksi/detail', $data);
     }
 
-
-
     public function update($id)
     {
         $errors = [];
@@ -241,7 +236,6 @@ class Transaksi extends CI_Controller
         $this->session->set_flashdata('success_message', 'Transaksi berhasil diperbarui.');
         redirect('transaksi');
     }
-
 
     public function hapus($id)
     {

@@ -24,7 +24,6 @@
                             <option value="1" <?= ($barang->status == '1' || $barang->status == 't') ? 'selected' : ''; ?>>Aktif</option>
                             <option value="0" <?= ($barang->status == '0' || $barang->status == 'f') ? 'selected' : ''; ?>>Tidak Aktif</option>
                         </select>
-
                     </div>
 
                     <button type="submit" class="btn btn-primary">Simpan</button>

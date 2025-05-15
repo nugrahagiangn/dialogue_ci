@@ -1,7 +1,6 @@
 <?php
 $this->load->view('layout/header', ['title' => 'Daftar Transaksi']);
 
-
 // Isi <thead>
 $thead = ['No', 'ID Transaksi', 'Nama Pembeli', 'Tanggal Transaksi', 'Total Dibayar', 'keterangan', 'Aksi'];
 

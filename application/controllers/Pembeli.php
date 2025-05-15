@@ -33,8 +33,6 @@ class Pembeli extends CI_Controller
         redirect($redirect_to ?? 'pembeli');
     }
 
-
-
     public function edit($encoded_id)
     {
         $id = base64_decode(urldecode($encoded_id));

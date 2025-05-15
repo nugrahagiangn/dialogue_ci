@@ -23,7 +23,6 @@
                             <option value="1">Aktif</option>
                             <option value="0">Tidak Aktif</option>
                         </select>
-
                     </div>
                     <button type="submit" class="btn btn-success">Simpan</button>
                     <a href="<?php echo site_url('barang'); ?>" class="btn btn-secondary">Kembali</a>

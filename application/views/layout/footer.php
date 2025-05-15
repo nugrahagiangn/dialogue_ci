@@ -19,7 +19,6 @@
         return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
     }
 
-
     function updateNomorBarang() {
         document.querySelectorAll('.barang-item').forEach((el, index) => {
             const label = el.querySelector('.form-number');
@@ -75,7 +74,6 @@
         const diskonRupiahInput = document.querySelector('.diskon_rupiah');
         const diskonPersenGlobal = diskonPersenInput ? parseFloat(diskonPersenInput.value) || 0 : 0;
         const diskonRupiahGlobal = diskonRupiahInput ? parseInt(diskonRupiahInput.value) || 0 : 0;
-
 
         // Hitung total akhir setelah semua diskon
         let totalSetelahDiskonGlobal = subtotal;

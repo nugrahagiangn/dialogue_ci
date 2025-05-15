@@ -1,7 +1,6 @@
 <?php
 class Transaksi_model extends CI_Model
 {
-
     public function get_all_transaksi()
     {
         $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli, TO_CHAR(t.tanggal , \'DD FMMonth YYYY - HH24:MI:SS\') AS tgl, TO_CHAR(t.tanggal , \'YYYY-MM-DD\') AS tgl_iso  ');
@@ -90,8 +89,6 @@ class Transaksi_model extends CI_Model
         return $this->db->get()->result();
     }
 
-
-
     public function generate_id_transaksi()
     {
         $prefix = 'OP-' . date('ym');
@@ -107,9 +104,6 @@ class Transaksi_model extends CI_Model
 
         return $new_id;
     }
-
-
-
 
     public function simpan_transaksi($data)
     {
@@ -156,8 +150,6 @@ class Transaksi_model extends CI_Model
         $this->db->insert_batch('detail_transaksi', $items);
     }
 
-
-
     public function get_barang()
     {
         return $this->db->where('status', TRUE)->get('barang')->result();
@@ -194,7 +186,6 @@ class Transaksi_model extends CI_Model
             ->get('detail_transaksi')
             ->result();
     }
-
 
     public function update_transaksi($data, &$errors = [])
     {
@@ -266,8 +257,6 @@ class Transaksi_model extends CI_Model
 
         return true;
     }
-
-
 
     public function delete_transaksi($id)
     {

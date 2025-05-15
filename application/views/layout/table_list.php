@@ -17,7 +17,6 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-
         <?php if ($segment === 'transaksi'): ?>
             <div class="row align-items-end mb-3">
                 <div class="col-md-3">
@@ -45,7 +44,6 @@
                 </div>
             </div>
         <?php endif; ?>
-
         <div class="table-responsive">
             <table id="datatable" class="table table-bordered table-striped">
                 <thead class="table-dark">
