@@ -59,8 +59,7 @@
                             </table>
                         </div>
 
-
-                        <button type="button" id="tambahBarang" class="btn btn-primary btn-sm">Tambah Barang</button>
+                        <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang"><i class="bi bi-plus-circle me-1"></i> Barang</button>
 
                     </div>
 

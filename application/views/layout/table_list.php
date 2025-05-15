@@ -4,7 +4,7 @@
     $segment = $this->uri->segment(1) ?? 'transaksi';
     ?>
     <a href="<?= site_url($segment . '/tambah'); ?>" class="btn btn-primary">
-        + Tambah <?= ucfirst($segment); ?>
+        <i class="bi bi-plus-circle me-1"></i> Tambah <?= ucfirst($segment); ?>
     </a>
 </div>
 
@@ -28,22 +28,34 @@
                     <input type="text" id="maxDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= $max_date ?>">
                 </div>
                 <div class="col-md-2">
-                    <button id="btnFilter" class="btn btn-success w-100">Cari</button>
+                    <label class="form-label d-block">&nbsp;</label>
+                    <button id="btnFilter" class="btn btn-success w-100">
+                        <i class="bi bi-search me-1"></i> Cari
+                    </button>
                 </div>
                 <div class="col-md-2 offset-md-2 text-end">
                     <label class="form-label d-block">&nbsp;</label>
                     <div class="dropdown">
                         <button class="btn btn-info dropdown-toggle w-100" type="button" id="dropdownExport" data-bs-toggle="dropdown" aria-expanded="false">
-                            Export
+                            <i class="bi bi-box-arrow-down me-1"></i> Export
                         </button>
                         <ul class="dropdown-menu w-100" aria-labelledby="dropdownExport">
-                            <li><a class="dropdown-item" href="#" id="btnExport">Export Ringkasan</a></li>
-                            <li><a class="dropdown-item" href="#" id="btnExportDtl">Export Detail</a></li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="btnExport">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Export Ringkasan
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" id="btnExportDtl">
+                                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Detail
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
         <?php endif; ?>
+
         <div class="table-responsive">
             <table id="datatable" class="table table-bordered table-striped">
                 <thead class="table-dark">

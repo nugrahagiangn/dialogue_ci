@@ -87,7 +87,7 @@
                                         </div>
                                         <div class="col-md-2">
                                             <input type="hidden" name="hargas[]" class="harga" value="0">
-                                            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
+                                            <button type="button" class="btn btn-danger btn-sm hapusBarang"><i class="bi bi-trash me-1"></i>Hapus</button>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -97,7 +97,7 @@
                             </tr>
                         </tbody>
 
-                        <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang">+ Tambah Barang</button>
+                        <button type="button" class="btn btn-outline-primary mt-2" id="tambahBarang"><i class="bi bi-plus-circle me-1"></i> Barang</button>
 
                         <div id="totalHargaContainer" class="card mt-3 d-none">
                             <div class="card-body">

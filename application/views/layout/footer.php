@@ -137,7 +137,7 @@
         </div>
         <div class="col-md-2">
             <input type="hidden" name="hargas[]" class="harga" value="0">
-            <button type="button" class="btn btn-danger btn-sm hapusBarang">Hapus</button>
+            <button type="button" class="btn btn-danger btn-sm hapusBarang"><i class="bi bi-trash me-1"></i>Hapus</button>
         </div>
     </div>`;
     }
