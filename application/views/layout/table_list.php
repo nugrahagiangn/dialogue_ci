@@ -17,18 +17,33 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
+
         <?php if ($segment === 'transaksi'): ?>
-            <div class="row mb-3">
+            <div class="row align-items-end mb-3">
                 <div class="col-md-3">
-                    <label>Dari Tanggal</label>
-                    <input type="text" id="minDate" class="form-control datepicker" placeholder="YYYY-MM-DD">
+                    <label for="minDate" class="form-label">Dari Tanggal</label>
+                    <input type="text" id="minDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= $min_date ?>">
                 </div>
                 <div class="col-md-3">
-                    <label>Sampai Tanggal</label>
-                    <input type="text" id="maxDate" class="form-control datepicker" placeholder="YYYY-MM-DD">
+                    <label for="maxDate" class="form-label">Sampai Tanggal</label>
+                    <input type="text" id="maxDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= $max_date ?>">
+                </div>
+                <div class="col-md-2">
+                    <button id="btnFilter" class="btn btn-success w-100">Cari</button>
+                </div>
+                <div class="col-md-2 offset-md-2 text-end">
+                    <label class="form-label d-block">&nbsp;</label>
+                    <div class="dropdown">
+                        <button class="btn btn-info dropdown-toggle w-100" type="button" id="dropdownExport" data-bs-toggle="dropdown" aria-expanded="false">
+                            Export
+                        </button>
+                        <ul class="dropdown-menu w-100" aria-labelledby="dropdownExport">
+                            <li><a class="dropdown-item" href="#" id="btnExport">Export Ringkasan</a></li>
+                            <li><a class="dropdown-item" href="#" id="btnExportDtl">Export Detail</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-
         <?php endif; ?>
 
         <div class="table-responsive">

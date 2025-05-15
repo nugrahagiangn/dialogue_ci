@@ -9,11 +9,16 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
+    const base_url = '<?= base_url() ?>';
+</script>
+<script>
     let barangList = <?= json_encode(isset($barang) ? $barang : []); ?>;
 
     function formatRupiah(angka) {
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        if (isNaN(angka) || !angka) return 'Rp 0';
+        return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
     }
+
 
     function updateNomorBarang() {
         document.querySelectorAll('.barang-item').forEach((el, index) => {
@@ -22,6 +27,16 @@
                 label.textContent = `#${index + 1}`;
             }
         });
+    }
+
+    function parseCustomDate(input) {
+        const regex = /^(\d{2})-(\d{2})-(\d{4}) (\d{2}):(\d{2})$/;
+        const match = input.match(regex);
+
+        if (!match) return null;
+
+        const [, dd, mm, yyyy, hh, mi] = match;
+        return new Date(`${yyyy}-${mm}-${dd}T${hh}:${mi}:00`);
     }
 
     function updateTotal() {
@@ -56,8 +71,11 @@
             }
         });
 
-        const diskonPersenGlobal = parseFloat(document.querySelector('.diskon_persen')?.value || 0);
-        const diskonRupiahGlobal = parseInt(document.querySelector('.diskon_rupiah')?.value || 0);
+        const diskonPersenInput = document.querySelector('.diskon_persen');
+        const diskonRupiahInput = document.querySelector('.diskon_rupiah');
+        const diskonPersenGlobal = diskonPersenInput ? parseFloat(diskonPersenInput.value) || 0 : 0;
+        const diskonRupiahGlobal = diskonRupiahInput ? parseInt(diskonRupiahInput.value) || 0 : 0;
+
 
         // Hitung total akhir setelah semua diskon
         let totalSetelahDiskonGlobal = subtotal;
@@ -164,19 +182,24 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        const PAGE_MODE = {
+            TAMBAH: 'tambah',
+            EDIT: 'edit'
+        };
         const page = '<?= isset($page) ? $page : ''; ?>';
+
         const tambahBtn = document.getElementById('tambahBarang');
         const containerId = page === 'edit' ? 'barangContainerEdit' : 'barangContainer';
         const initialContainer = document.getElementById(containerId);
 
         // Halaman tambah: jika ada barangList & baris awal sudah muncul, jalankan Select2 & total
-        if (page === 'tambah' && barangList.length && document.querySelectorAll('.barang-item').length > 0) {
+        if (page === PAGE_MODE.TAMBAH && barangList.length && document.querySelectorAll('.barang-item').length > 0) {
             initializeSelect2();
             updateTotal();
         }
 
         // Tambahkan satu baris kosong default (khusus tambah)
-        if (page === 'tambah' && initialContainer) {
+        if (page === PAGE_MODE.TAMBAH && initialContainer) {
             initialContainer.insertAdjacentHTML('beforeend', buatBarangRowHtml());
             initializeSelect2();
             updateNomorBarang();
@@ -193,84 +216,6 @@
                 }
             });
         }
-
-        // Saat select barang berubah: ambil harga dan isi input hidden harga
-        document.addEventListener('change', e => {
-
-            if (e.target.matches('.barang_id')) {
-                const harga = e.target.selectedOptions[0]?.dataset.harga || 0;
-                const hargaInput = e.target.closest('.barang-item')?.querySelector('.harga');
-                if (hargaInput) hargaInput.value = harga;
-                updateTotal();
-            }
-
-            if (e.target.matches('.jumlah') || e.target.matches('.diskon_persen') || e.target.matches('.diskon_rupiah')) {
-                updateTotal();
-            }
-        });
-
-        // Update total saat inputan jumlah atau diskon berubah
-        ['input', 'keyup', 'paste'].forEach(event => {
-            document.addEventListener(event, e => {
-                if (
-                    e.target.matches('.jumlah') ||
-                    e.target.matches('.persen') ||
-                    e.target.matches('.rp')
-                ) {
-                    setTimeout(updateTotal, 0);
-                }
-            });
-        });
-
-        // Hapus baris barang
-        document.addEventListener('click', e => {
-            if (e.target.matches('.hapusBarang')) {
-                e.target.closest('.barang-item').remove();
-                updateTotal();
-                updateNomorBarang();
-            }
-        });
-
-        // EDIT MODE: Atur harga, trigger semua field agar updateTotal bekerja
-        if (page === 'edit') {
-            // Set input harga dari data-harga
-            document.querySelectorAll('.barang-item').forEach(row => {
-                const select = row.querySelector('.barang_id');
-                const hargaInput = row.querySelector('.harga');
-                const selectedOption = select?.selectedOptions[0];
-                const harga = selectedOption?.dataset.harga || 0;
-                if (hargaInput) hargaInput.value = harga;
-            });
-
-            initializeSelect2();
-            updateNomorBarang();
-
-            // Trigger event input dan change di semua input relevan
-            const allTriggerInputs = document.querySelectorAll(
-                '.barang-item .jumlah, .barang-item .persen, .barang-item .diskon_persen'
-            );
-
-            allTriggerInputs.forEach(input => {
-                input.dispatchEvent(new Event('input', {
-                    bubbles: true
-                }));
-                input.dispatchEvent(new Event('change', {
-                    bubbles: true
-                }));
-            });
-
-            // Jalankan update total setelah semua input ready
-            setTimeout(() => {
-                updateTotal();
-            }, 100);
-        }
-
-    });
-
-
-
-
-    document.addEventListener('DOMContentLoaded', () => {
         const form = document.querySelector('form');
         if (!form) return;
 
@@ -320,15 +265,14 @@
         form.addEventListener('submit', function(e) {
             let errors = [];
 
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.alert-danger').forEach(el => el.remove());
+
             const diskonPersenGlobal = parseFloat(document.querySelector('.diskon_persen')?.value || 0);
             if (diskonPersenGlobal < 0 || diskonPersenGlobal > 100) {
                 document.querySelector('.diskon_persen').classList.add('is-invalid');
                 errors.push("Diskon persen global harus antara 0 - 100.");
             }
-
-
-            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            document.querySelectorAll('.alert-danger').forEach(el => el.remove());
 
             if (!pembeli.value) {
                 pembeli.classList.add('is-invalid');
@@ -336,9 +280,19 @@
                 errors.push('Pembeli harus dipilih.');
             }
 
-            if (!tanggal || !tanggal.value.trim() || isNaN(Date.parse(tanggal.value))) {
+            // if (!tanggal || !tanggal.value.trim() || isNaN(Date.parse(tanggal.value))) {
+            //     tanggal.classList.add('is-invalid');
+            //     errors.push('Tanggal transaksi harus diisi dengan format yang benar.');
+            // }
+            const tanggalInput = tanggal.value.trim();
+
+            console.log(tanggalInput);
+
+            const parsedDate = parseCustomDate(tanggalInput);
+
+            if (!tanggalInput || !parsedDate || isNaN(parsedDate.getTime())) {
                 tanggal.classList.add('is-invalid');
-                errors.push('Tanggal transaksi harus diisi dengan format yang benar.');
+                errors.push('Tanggal transaksi harus diisi dengan format yang benar (contoh: 14-05-2025 15:45).');
             }
 
             const barangItems = document.querySelectorAll('.barang-item');
@@ -376,39 +330,117 @@
                 cardBody.insertAdjacentHTML('afterbegin', errorHtml);
             }
         });
+
+        // Saat select barang berubah: ambil harga dan isi input hidden harga
+        document.addEventListener('change', e => {
+
+            if (e.target.matches('.barang_id')) {
+                const harga = e.target.selectedOptions[0]?.dataset.harga || 0;
+                const hargaInput = e.target.closest('.barang-item')?.querySelector('.harga');
+                if (hargaInput) hargaInput.value = harga;
+                updateTotal();
+            }
+
+            if (e.target.matches('.jumlah') || e.target.matches('.diskon_persen') || e.target.matches('.diskon_rupiah')) {
+                updateTotal();
+            }
+        });
+
+        ['input', 'keyup', 'paste'].forEach(event => {
+            document.addEventListener(event, e => {
+                if (
+                    e.target.matches('.jumlah') ||
+                    e.target.matches('.persen') ||
+                    e.target.matches('.rp')
+                ) {
+                    setTimeout(updateTotal, 0);
+                }
+            });
+        });
+
+        // Hapus baris barang
+        document.addEventListener('click', e => {
+            if (e.target.matches('.hapusBarang')) {
+                e.target.closest('.barang-item').remove();
+                updateTotal();
+                updateNomorBarang();
+            }
+        });
+
+        if (page === PAGE_MODE.EDIT) {
+            // Set input harga dari data-harga
+            document.querySelectorAll('.barang-item').forEach(row => {
+                const select = row.querySelector('.barang_id');
+                const hargaInput = row.querySelector('.harga');
+                const selectedOption = select?.selectedOptions[0];
+                const harga = selectedOption?.dataset.harga || 0;
+                if (hargaInput) hargaInput.value = harga;
+            });
+
+            initializeSelect2();
+            updateNomorBarang();
+
+            // Trigger event input dan change di semua input relevan
+            const allTriggerInputs = document.querySelectorAll(
+                '.barang-item .jumlah, .barang-item .persen, .barang-item .diskon_persen'
+            );
+
+            allTriggerInputs.forEach(input => {
+                input.dispatchEvent(new Event('input', {
+                    bubbles: true
+                }));
+                input.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
+            });
+
+            // Jalankan update total setelah semua input ready
+            setTimeout(() => {
+                updateTotal();
+            }, 100);
+        }
+
     });
 
     $(document).ready(function() {
-
         const today = new Date();
         const awalBulan = new Date(today.getFullYear(), today.getMonth(), 1);
 
         const formatDate = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`; // Mengubah format menjadi dd-mm-yyyy
         };
 
-        // Set nilai awal input tanggal filter
-        $('#minDate').val(formatDate(awalBulan));
-        $('#maxDate').val(formatDate(today));
+        // Set default tanggal di input
+        // $('#minDate').val(formatDate(awalBulan));
+        // $('#maxDate').val(formatDate(today));
 
-        // Inisialisasi flatpickr khusus untuk #minDate dan #maxDate
+        // Inisialisasi flatpickr dengan format tanggal baru
         flatpickr('#minDate', {
-            dateFormat: 'Y-m-d',
-            allowInput: true,
-            defaultDate: formatDate(awalBulan)
+            dateFormat: 'd-m-Y', // Format tanggal menjadi dd-mm-yyyy
+            allowInput: true
         });
-
         flatpickr('#maxDate', {
-            dateFormat: 'Y-m-d',
+            dateFormat: 'd-m-Y', // Format tanggal menjadi dd-mm-yyyy
+            allowInput: true
+        });
+        flatpickr('#tanggalEdit', {
+            dateFormat: "d-m-Y H:i",
             allowInput: true,
-            defaultDate: formatDate(today)
+            time_24hr: true,
+            enableTime: true,
+        });
+        flatpickr('#tanggalTbh', {
+            dateFormat: "d-m-Y H:i",
+            allowInput: true,
+            time_24hr: true,
+            enableTime: true,
+            defaultDate: new Date()
         });
 
-        // Inisialisasi flatpickr untuk input lain yang pakai waktu
-        flatpickr('.datepicker:not(#minDate):not(#maxDate)', {
+        flatpickr('.datepicker:not(#minDate):not(#maxDate):not(#tanggalEdit):not(#tanggalTbh)', {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
@@ -416,31 +448,63 @@
             defaultDate: new Date()
         });
 
-        let minDate = awalBulan;
-        let maxDate = today;
+        // Hanya aktifkan filter setelah tombol diklik
+        let filterAktif = false;
+        let minDate = null;
+        let maxDate = null;
 
         $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (!filterAktif) return true;
+
             const row = settings.aoData[dataIndex].nTr;
             const tglStr = $(row).find('td:eq(3)').data('filter'); // Kolom ke-4
+
             if (!tglStr) return true;
 
-            const tgl = new Date(tglStr);
+            const tgl = new Date(tglStr); // ISO format aman diparse
+
+            if (isNaN(tgl)) return true; // skip kalau gagal parse
+
             if ((minDate && tgl < minDate) || (maxDate && tgl > maxDate)) {
                 return false;
             }
             return true;
         });
 
-        $('#minDate, #maxDate').on('change', function() {
-            minDate = $('#minDate').val() ? new Date($('#minDate').val()) : null;
-            maxDate = $('#maxDate').val() ? new Date($('#maxDate').val()) : null;
-            table.draw();
-        });
-
         const table = $('#datatable').DataTable({
-            destroy: true
+            destroy: true,
+            order: [], // opsional: hilangkan sort default
+            rowCallback: function(row, data, index) {
+                const pageInfo = this.api().page.info(); // gunakan API dari DataTables, bukan variabel luar
+                $('td:eq(0)', row).html(pageInfo.start + index + 1);
+            }
         });
 
+        $('#btnFilter').click(function(e) {
+            e.preventDefault();
+            const minDate = $('#minDate').val();
+            const maxDate = $('#maxDate').val();
+            const url = new URL(window.location.href);
+            url.searchParams.set('min_date', minDate);
+            url.searchParams.set('max_date', maxDate);
+            window.location.href = url.toString();
+        });
+
+        $('#btnExport').click(function(e) {
+            e.preventDefault();
+            const minDate = $('#minDate').val();
+            const maxDate = $('#maxDate').val();
+            const exportUrl = `<?= base_url('transaksi/export_excel') ?>?min_date=${minDate}&max_date=${maxDate}`;
+            window.location.href = exportUrl;
+        });
+
+        $('#btnExportDtl').on('click', function() {
+            const minDate = $('#minDate').val();
+            const maxDate = $('#maxDate').val();
+
+            const url = `${base_url}transaksi/export_excel_detail?min_date=${minDate}&max_date=${maxDate}`;
+            window.location.href = url;
+        });
 
         // Auto hide alert
         setTimeout(() => {
@@ -463,7 +527,6 @@
         </div>
     </div>
 </div>
-
 
 </body>
 

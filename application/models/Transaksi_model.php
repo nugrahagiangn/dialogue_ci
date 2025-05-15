@@ -16,14 +16,81 @@ class Transaksi_model extends CI_Model
                      FROM detail_transaksi
                      JOIN barang ON barang.id = detail_transaksi.barang_id
                      GROUP BY transaksi_id) dt", 'dt.transaksi_id = t.id_transaksi');
+        $this->db->order_by('t.tanggal', 'DESC');
         return $this->db->get()->result();
     }
 
+    public function count_filtered_transaksi($min, $max)
+    {
+        if ($min && $max) {
+            $this->db->where('tanggal >=', $min);
+            $this->db->where('tanggal <=', $max);
+        }
+        return $this->db->count_all_results('transaksi');
+    }
+
+    public function get_filtered_transaksi($min = null, $max = null, $limit = null, $offset = null)
+    {
+        $this->db->select('t.*, p.nama AS nama_pembeli, dt.barang_dibeli, 
+                       TO_CHAR(t.tanggal, \'DD FMMonth YYYY - HH24:MI:SS\') AS tgl, 
+                       TO_CHAR(t.tanggal, \'YYYY-MM-DD\') AS tgl_iso');
+        $this->db->from('transaksi t');
+        $this->db->join('pembeli p', 't.pembeli_id = p.id');
+        $this->db->join("(SELECT 
+                        transaksi_id, 
+                        string_agg(barang.nama || ' (' || jumlah || ' x ' || 
+                        (total / NULLIF(jumlah, 0)) || ')', ', ') AS barang_dibeli
+                     FROM detail_transaksi
+                     JOIN barang ON barang.id = detail_transaksi.barang_id
+                     GROUP BY transaksi_id) dt", 'dt.transaksi_id = t.id_transaksi');
+
+        // Filter tanggal jika ada
+        if ($min && $max) {
+            $this->db->where("DATE(t.tanggal) >=", $min);
+            $this->db->where("DATE(t.tanggal) <=", $max);
+        }
+
+        $this->db->order_by('t.tanggal', 'DESC');
+
+        // Tambahkan pagination jika ada
+        if ($limit !== null && $offset !== null) {
+            $this->db->limit($limit, $offset);
+        }
+
+        return $this->db->get()->result();
+    }
 
     public function insert_transaksi($data)
     {
         return $this->db->insert('transaksi', $data);
     }
+
+    public function get_transaksi_with_detail($min_date = null, $max_date = null)
+    {
+        $this->db->select('
+        t.id_transaksi, t.tanggal, t.keterangan, t.total_bayar,
+        p.nama as nama_pembeli,
+        b.nama as nama_barang, dt.jumlah, dt.total as subtotal,
+        dt.disc_rp, dt.disc_persen
+    ');
+        $this->db->from('transaksi t');
+        $this->db->join('pembeli p', 't.pembeli_id = p.id');
+        $this->db->join('detail_transaksi dt', 'dt.transaksi_id = t.id_transaksi'); // <- penting
+        $this->db->join('barang b', 'dt.barang_id = b.id');
+
+        if ($min_date) {
+            $this->db->where("t.tanggal >=", $min_date . ' 00:00:00');
+        }
+        if ($max_date) {
+            $this->db->where("t.tanggal <=", $max_date . ' 23:59:59');
+        }
+
+        $this->db->order_by('t.tanggal', 'DESC');
+        log_message('debug', $this->db->last_query());
+        return $this->db->get()->result();
+    }
+
+
 
     public function generate_id_transaksi()
     {

@@ -26,7 +26,7 @@
                 <form action="<?php echo site_url('transaksi/simpan'); ?>" method="post">
                     <div class="mb-3">
                         <label for="tanggal" class="form-label">Tanggal Transaksi</label>
-                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" placeholder="YYYY-MM-DD" value="<?= isset($old['tanggal']) ? $old['tanggal'] : ''; ?>">
+                        <input type="text" class="form-control datepicker" id="tanggalTbh" name="tanggal" placeholder="YYYY-MM-DD" value="<?= isset($old['tanggal']) ? $old['tanggal'] : ''; ?>">
                     </div>
 
                     <div class="mb-3">
@@ -63,10 +63,6 @@
                         <button type="button" id="tambahBarang" class="btn btn-primary btn-sm">Tambah Barang</button>
 
                     </div>
-
-                    <!-- <div id="barangContainer"></div> -->
-
-                    <!-- <div id="jumlahContainer"></div> -->
 
                     <div id="totalHargaContainer" class="card mt-3 d-none">
                         <div class="card-body">

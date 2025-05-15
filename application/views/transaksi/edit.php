@@ -29,7 +29,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="tanggal" class="form-label">Tanggal Transaksi</label>
-                        <input type="text" class="form-control datepicker" id="tanggal" name="tanggal" value="<?= format_tanggal_indonesia($transaksi->tanggal); ?>">
+                        <input type="text" class="form-control datepicker" id="tanggalEdit" name="tanggal" value="<?= format_tanggal_indonesia($transaksi->tanggal); ?>">
                     </div>
                     <div class="mb-3">
                         <label for="pembeli_id" class="form-label">Pembeli</label>
