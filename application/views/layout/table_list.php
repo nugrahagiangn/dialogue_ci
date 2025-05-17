@@ -21,11 +21,11 @@
             <div class="row align-items-end mb-3">
                 <div class="col-md-3">
                     <label for="minDate" class="form-label">Dari Tanggal</label>
-                    <input type="text" id="minDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= $min_date ?>">
+                    <input type="text" id="minDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= htmlspecialchars($min_date ?? '') ?>">
                 </div>
                 <div class="col-md-3">
                     <label for="maxDate" class="form-label">Sampai Tanggal</label>
-                    <input type="text" id="maxDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= $max_date ?>">
+                    <input type="text" id="maxDate" class="form-control datepicker" placeholder="DD-MM-YYYY" value="<?= htmlspecialchars($max_date ?? '') ?>">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label d-block">&nbsp;</label>
@@ -36,10 +36,12 @@
                 <div class="col-md-2 offset-md-2 text-end">
                     <label class="form-label d-block">&nbsp;</label>
                     <div class="dropdown">
-                        <button class="btn btn-info dropdown-toggle w-100" type="button" id="dropdownExport" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-box-arrow-down me-1"></i> Export
+                        <button class="btn btn-info w-100" type="button">
+                            <a class="dropdown-item" href="#" id="btnExport">
+                                <i class="bi bi-file-earmark-text me-1"></i> Export
+                            </a>
                         </button>
-                        <ul class="dropdown-menu w-100" aria-labelledby="dropdownExport">
+                        <!-- <ul class="dropdown-menu w-100" aria-labelledby="dropdownExport">
                             <li>
                                 <a class="dropdown-item" href="#" id="btnExport">
                                     <i class="bi bi-file-earmark-text me-1"></i> Export Ringkasan
@@ -50,7 +52,7 @@
                                     <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Detail
                                 </a>
                             </li>
-                        </ul>
+                        </ul> -->
                     </div>
                 </div>
             </div>

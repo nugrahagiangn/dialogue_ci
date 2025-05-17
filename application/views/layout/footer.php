@@ -416,13 +416,19 @@
         // $('#maxDate').val(formatDate(today));
 
         // Inisialisasi flatpickr dengan format tanggal baru
+        const minDateVal = $('#minDate').val();
+        const maxDateVal = $('#maxDate').val();
+
         flatpickr('#minDate', {
-            dateFormat: 'd-m-Y', // Format tanggal menjadi dd-mm-yyyy
-            allowInput: true
+            dateFormat: 'd-m-Y',
+            allowInput: true,
+            defaultDate: minDateVal ? minDateVal : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
         });
+
         flatpickr('#maxDate', {
-            dateFormat: 'd-m-Y', // Format tanggal menjadi dd-mm-yyyy
-            allowInput: true
+            dateFormat: 'd-m-Y',
+            allowInput: true,
+            defaultDate: maxDateVal ? maxDateVal : new Date()
         });
         flatpickr('#tanggalEdit', {
             dateFormat: "d-m-Y H:i",
@@ -480,21 +486,41 @@
 
         $('#btnFilter').click(function(e) {
             e.preventDefault();
+
             const minDate = $('#minDate').val();
             const maxDate = $('#maxDate').val();
+
             const url = new URL(window.location.href);
-            url.searchParams.set('min_date', minDate);
-            url.searchParams.set('max_date', maxDate);
+
+            if (minDate) {
+                url.searchParams.set('min_date', minDate);
+            } else {
+                url.searchParams.delete('min_date');
+            }
+
+            if (maxDate) {
+                url.searchParams.set('max_date', maxDate);
+            } else {
+                url.searchParams.delete('max_date');
+            }
+
             window.location.href = url.toString();
         });
+
 
         $('#btnExport').click(function(e) {
             e.preventDefault();
             const minDate = $('#minDate').val();
             const maxDate = $('#maxDate').val();
-            const exportUrl = `<?= base_url('transaksi/export_excel') ?>?min_date=${minDate}&max_date=${maxDate}`;
+            const params = new URLSearchParams();
+
+            if (minDate) params.append('min_date', minDate);
+            if (maxDate) params.append('max_date', maxDate);
+
+            const exportUrl = `<?= base_url('transaksi/export_excel') ?>?${params.toString()}`;
             window.location.href = exportUrl;
         });
+
 
         $('#btnExportDtl').on('click', function() {
             const minDate = $('#minDate').val();

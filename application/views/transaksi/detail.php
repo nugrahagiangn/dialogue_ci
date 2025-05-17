@@ -66,9 +66,9 @@
                 </table>
 
                 <div class="mt-4">
-                    <h5 class="text-end">Total Keseluruhan: <span class="text-dark">Rp <?= number_format($total_tanpa_diskon, 0, ',', '.'); ?></span></h5>
-                    <h5 class="text-end">Diskon yang Didapat Dalam Rp: <span class="text-danger">Rp <?= number_format($total_diskon, 0, ',', '.'); ?></span></h5>
-                    <h4 class="text-end">Total Bayar Setelah Diskon: <span class="text-success">Rp <?= number_format($total_bayar, 0, ',', '.'); ?></span></h4>
+                    <h5 class="text-end">Total : <span class="text-dark">Rp <?= number_format($total_tanpa_diskon, 0, ',', '.'); ?></span></h5>
+                    <h5 class="text-end">Diskon : <span class="text-danger">Rp <?= number_format($total_diskon, 0, ',', '.'); ?></span></h5>
+                    <h4 class="text-end">Jumlah Bayar : <span class="text-success">Rp <?= number_format($total_bayar, 0, ',', '.'); ?></span></h4>
                 </div>
 
                 <div class="mb-3 mt-4">

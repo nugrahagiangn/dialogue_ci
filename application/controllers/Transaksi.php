@@ -16,15 +16,25 @@ class Transaksi extends CI_Controller
 
     public function index()
     {
+
+        // Ambil parameter filter dari URL
         $min_date = $this->input->get('min_date');
         $max_date = $this->input->get('max_date');
 
-        // Default null-check
-        $min_date_db = $this->convert_date_src($min_date);
-        $max_date_db = $this->convert_date_src($max_date);
+        // Jika tidak ada input dari URL, set default: awal bulan dan hari ini
+        if (!$min_date) {
+            $min_date = date('01-m-Y');  // tanggal 1 bulan ini dengan format d-m-Y
+        }
+        if (!$max_date) {
+            $max_date = date('d-m-Y');   // tanggal hari ini dengan format d-m-Y
+        }
 
-        $data['min_date'] = $min_date;
-        $data['max_date'] = $max_date;
+        $data['min_date'] = $min_date ? $min_date : null;
+        $data['max_date'] = $max_date ? $max_date : null;
+
+        $min_date_db = $min_date ? $this->convert_date_src($min_date) : null;
+        $max_date_db = $max_date ? $this->convert_date_src($max_date) : null;
+
         $data['transaksi'] = $this->Transaksi_model->get_filtered_transaksi($min_date_db, $max_date_db);
 
         $this->load->view('transaksi/index', $data);
@@ -254,208 +264,236 @@ class Transaksi extends CI_Controller
         $min_date_db = $this->convert_date_src($min_date);
         $max_date_db = $this->convert_date_src($max_date);
 
-        // Ambil jumlah per halaman dari DataTables
-        $per_page = $this->input->get('length') ?: 10;
-
-        // Hitung total data setelah filter
-        $total_data = $this->Transaksi_model->count_filtered_transaksi($min_date_db, $max_date_db);
-        $total_pages = ceil($total_data / $per_page);
-
-        // Buat Spreadsheet baru
         $spreadsheet = new Spreadsheet();
 
-        for ($page = 0; $page < $total_pages; $page++) {
-            $offset = $page * $per_page;
-            $data = $this->Transaksi_model->get_filtered_transaksi($min_date_db, $max_date_db, $per_page, $offset);
+        /** === Sheet 1: Ringkasan Transaksi === **/
+        $sheet1 = $spreadsheet->getActiveSheet();
+        $sheet1->setTitle('Transaksi');
 
-            // Tambahkan sheet baru
-            $sheetTitle = 'Halaman ' . ($page + 1);
-            if ($page == 0) {
-                $sheet = $spreadsheet->getActiveSheet()->setTitle($sheetTitle);
-            } else {
-                $sheet = $spreadsheet->createSheet()->setTitle($sheetTitle);
-            }
-
-            // Judul laporan di baris 1
-            $judul = 'Laporan Transaksi';
-            if ($min_date && $max_date) {
-                $judul .= ' Tanggal ' . $min_date . ' - ' . $max_date;
-            } else {
-                $judul .= ' (Semua Data)';
-            }
-            $sheet->setCellValue('A1', $judul);
-            $sheet->mergeCells('A1:F1');
-            $sheet->getStyle('A1')->applyFromArray([
-                'font' => ['bold' => true, 'size' => 14],
-                'alignment' => [
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                ],
-            ]);
-
-            // Header
-            $sheet->setCellValue('A2', 'No');
-            $sheet->setCellValue('B2', 'ID Transaksi');
-            $sheet->setCellValue('C2', 'Nama Pembeli');
-            $sheet->setCellValue('D2', 'Tanggal');
-            $sheet->setCellValue('E2', 'Total Dibayar');
-            $sheet->setCellValue('F2', 'Keterangan');
-
-            // Styling Header
-            $headerStyle = [
-                'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
-                'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['argb' => '4CAF50'],
-                ],
-                'alignment' => [
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                ],
-            ];
-            $sheet->getStyle('A2:F2')->applyFromArray($headerStyle);
-
-            // Data
-            $row = 3;
-            $no = $offset + 1;
-            foreach ($data as $tr) {
-                $sheet->setCellValue("A{$row}", $no++);
-                $sheet->setCellValue("B{$row}", $tr->id_transaksi);
-                $sheet->setCellValue("C{$row}", $tr->nama_pembeli);
-                $sheet->setCellValue("D{$row}", date('d-m-Y', strtotime($tr->tanggal)));
-                $sheet->setCellValue("E{$row}", $tr->total_bayar);
-                $sheet->setCellValue("F{$row}", $tr->keterangan);
-
-                // Rata tengah semua isi kolom (kecuali uang & teks)
-                $sheet->getStyle("A{$row}:F{$row}")->applyFromArray([
-                    'alignment' => [
-                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-                    ],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                            'color' => ['argb' => '000000'],
-                        ],
-                    ],
-                ]);
-
-                // Format uang
-                $sheet->getStyle("E{$row}")
-                    ->getNumberFormat()
-                    ->setFormatCode('[$Rp] #,##0.00');
-
-
-                $row++;
-            }
-
-            // Auto width
-            foreach (range('A', 'F') as $col) {
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-            }
-        }
-
-        // Download Excel
-        $filename = 'Laporan_Transaksi_' . date('YmdHis') . '.xlsx';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header("Content-Disposition: attachment;filename=\"$filename\"");
-        header('Cache-Control: max-age=0');
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
-        exit;
-    }
-
-    public function export_excel_detail()
-    {
-        $min_date = $this->input->get('min_date');
-        $max_date = $this->input->get('max_date');
-
-        $min_date_db = $this->convert_date_src($min_date);
-        $max_date_db = $this->convert_date_src($max_date);
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet()->setTitle('Laporan Transaksi');
-
-        $judul = 'Laporan Transaksi & Detail';
+        $judul1 = 'Laporan Transaksi';
         if ($min_date && $max_date) {
-            $judul .= ' Tanggal ' . $min_date . ' - ' . $max_date;
+            $judul1 .= ' Tanggal ' . $min_date . ' - ' . $max_date;
         }
-
-        $sheet->setCellValue('A1', $judul);
-        $sheet->mergeCells('A1:J1');
-        $sheet->getStyle('A1')->applyFromArray([
+        $sheet1->setCellValue('A1', $judul1);
+        $sheet1->mergeCells('A1:H1');
+        $sheet1->getStyle('A1')->applyFromArray([
             'font' => ['bold' => true, 'size' => 14],
             'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
         ]);
 
-        // Header kolom
-        $headers = ['No', 'ID Transaksi', 'Nama Pembeli', 'Tanggal', 'Total Bayar', 'Keterangan', 'Nama Barang', 'Jumlah', 'Diskon (%)', 'Diskon (Rp)', 'Subtotal'];
+        $headers1 = ['No', 'ID Transaksi', 'Nama Pembeli', 'Tanggal', 'Total', 'Diskon', 'Jumlah Bayar', 'Keterangan'];
         $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . '2', $header);
+        foreach ($headers1 as $header) {
+            $sheet1->setCellValue($col . '2', $header);
             $col++;
         }
 
-        $sheet->getStyle('A2:K2')->applyFromArray([
+        $sheet1->getStyle('A2:H2')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
             'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => '4CAF50']],
             'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
         ]);
 
-        log_message('debug', "Export Detail: min_date=$min_date | max_date=$max_date");
-        log_message('debug', "Converted: min_date_db=$min_date_db | max_date_db=$max_date_db");
+        $data_transaksi = $this->Transaksi_model->get_filtered_transaksi($min_date_db, $max_date_db);
 
-
-        // Data
-        $data = $this->Transaksi_model->get_transaksi_with_detail($min_date_db, $max_date_db);
         $row = 3;
         $no = 1;
-        $last_id_transaksi = null;
+        foreach ($data_transaksi as $tr) {
+            $sheet1->setCellValue("A{$row}", $no++);
+            $sheet1->setCellValue("B{$row}", $tr->id_transaksi);
+            $sheet1->setCellValue("C{$row}", $tr->nama_pembeli);
+            $sheet1->setCellValue("D{$row}", date('d-m-Y', strtotime($tr->tanggal)));
+            $sheet1->setCellValue("E{$row}", $tr->total_bayar);
+            $sheet1->setCellValue("F{$row}", $tr->total_diskon);
+            $sheet1->setCellValue("G{$row}", $tr->total_setelah_diskon);
+            $sheet1->setCellValue("H{$row}", $tr->keterangan);
 
-        foreach ($data as $tr) {
-            $same_transaksi = $last_id_transaksi === $tr->id_transaksi;
+            // Format angka
+            $sheet1->getStyle("E{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
+            $sheet1->getStyle("F{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
+            $sheet1->getStyle("G{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
 
-            $sheet->setCellValue("A{$row}", $same_transaksi ? '' : $no++);
-            $sheet->setCellValue("B{$row}", $same_transaksi ? '' : $tr->id_transaksi);
-            $sheet->setCellValue("C{$row}", $same_transaksi ? '' : $tr->nama_pembeli);
-            $sheet->setCellValue("D{$row}", $same_transaksi ? '' : date('d-m-Y', strtotime($tr->tanggal)));
-            $sheet->setCellValue("E{$row}", $same_transaksi ? '' : $tr->total_bayar);
-            $sheet->setCellValue("F{$row}", $same_transaksi ? '' : $tr->keterangan);
-
-            $sheet->setCellValue("G{$row}", $tr->nama_barang);
-            $sheet->setCellValue("H{$row}", $tr->jumlah);
-            $sheet->setCellValue("I{$row}", $tr->disc_persen);
-            $sheet->setCellValue("J{$row}", $tr->disc_rp);
-            $sheet->setCellValue("K{$row}", $tr->subtotal);
-
-            // Styling dan border
-            $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
-                'borders' => [
-                    'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
-                ],
-                'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+            $sheet1->getStyle("A{$row}:H{$row}")->applyFromArray([
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
             ]);
 
-            $sheet->getStyle("E{$row}")
-                ->getNumberFormat()
-                ->setFormatCode('[$Rp] #,##0.00');
-
             $row++;
-            $last_id_transaksi = $tr->id_transaksi;
-        }
-        log_message('debug', $this->db->last_query());
-
-        foreach (range('A', 'K') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
-        $filename = 'Laporan_Transaksi_Detail_' . date('YmdHis') . '.xlsx';
+        foreach (range('A', 'H') as $col) {
+            $sheet1->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        /** === Sheet 2: Detail Transaksi === **/
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Detail Transaksi');
+
+        $judul2 = 'Laporan Detail Transaksi';
+        if ($min_date && $max_date) {
+            $judul2 .= ' Tanggal ' . $min_date . ' - ' . $max_date;
+        }
+
+        $sheet2->setCellValue('A1', $judul2);
+        $sheet2->mergeCells('A1:I1'); // Sesuaikan merge dengan jumlah kolom header (9 kolom)
+        $sheet2->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 14],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        // Header baru tanpa kolom Tanggal dan Keterangan, kolom Total Bayar pindah ke kolom F sesuai permintaan
+        $headers2 = ['No', 'ID Transaksi', 'Nama Pembeli', 'Nama Barang', 'Jumlah', 'Harga Satuan', 'Diskon (%)', 'Diskon (Rp)', 'Subtotal'];
+        $col = 'A';
+        foreach ($headers2 as $header) {
+            $sheet2->setCellValue($col . '2', $header);
+            $col++;
+        }
+
+        $sheet2->getStyle('A2:I2')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => '4CAF50']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        $data_detail = $this->Transaksi_model->get_transaksi_with_detail($min_date_db, $max_date_db);
+        $row = 3;
+        $no = 1;
+        $last_id = null;
+
+        foreach ($data_detail as $tr) {
+
+            $same = $tr->id_transaksi === $last_id;
+
+            $sheet2->setCellValue("A{$row}", $same ? '' : $no++);
+            $sheet2->setCellValue("B{$row}", $tr->id_transaksi);
+            $sheet2->setCellValue("C{$row}", $tr->nama_pembeli);
+            $sheet2->setCellValue("D{$row}", $tr->nama_barang);
+            $sheet2->setCellValue("E{$row}", $tr->jumlah);
+            $sheet2->setCellValue("F{$row}", $tr->harga);
+            $sheet2->setCellValue("G{$row}", $tr->disc_persen);
+            $sheet2->setCellValue("H{$row}", $tr->disc_rp);
+            $sheet2->setCellValue("I{$row}", $tr->subtotal);
+
+            $sheet2->getStyle("F{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
+            $sheet2->getStyle("H{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
+            $sheet2->getStyle("I{$row}")->getNumberFormat()->setFormatCode('[$Rp] #,##0.00');
+
+            $sheet2->getStyle("A{$row}:I{$row}")->applyFromArray([
+                'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN]],
+            ]);
+
+            $last_id = $tr->id_transaksi;
+            $row++;
+        }
+
+        foreach (range('A', 'I') as $col) {
+            $sheet2->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $filename = 'Laporan_Transaksi_' . date('YmdHis') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header("Content-Disposition: attachment;filename=\"$filename\"");
         header('Cache-Control: max-age=0');
 
-        $writer = new Xlsx($spreadsheet);
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
     }
+
+
+
+    // public function export_excel_detail()
+    // {
+    //     $min_date = $this->input->get('min_date');
+    //     $max_date = $this->input->get('max_date');
+
+    //     $min_date_db = $this->convert_date_src($min_date);
+    //     $max_date_db = $this->convert_date_src($max_date);
+
+    //     $spreadsheet = new Spreadsheet();
+    //     $sheet = $spreadsheet->getActiveSheet()->setTitle('Laporan Transaksi');
+
+    //     $judul = 'Laporan Transaksi & Detail';
+    //     if ($min_date && $max_date) {
+    //         $judul .= ' Tanggal ' . $min_date . ' - ' . $max_date;
+    //     }
+
+    //     $sheet->setCellValue('A1', $judul);
+    //     $sheet->mergeCells('A1:J1');
+    //     $sheet->getStyle('A1')->applyFromArray([
+    //         'font' => ['bold' => true, 'size' => 14],
+    //         'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+    //     ]);
+
+    //     // Header kolom
+    //     $headers = ['No', 'ID Transaksi', 'Nama Pembeli', 'Tanggal', 'Total Bayar', 'Keterangan', 'Nama Barang', 'Jumlah', 'Diskon (%)', 'Diskon (Rp)', 'Subtotal'];
+    //     $col = 'A';
+    //     foreach ($headers as $header) {
+    //         $sheet->setCellValue($col . '2', $header);
+    //         $col++;
+    //     }
+
+    //     $sheet->getStyle('A2:K2')->applyFromArray([
+    //         'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF']],
+    //         'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['argb' => '4CAF50']],
+    //         'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+    //     ]);
+
+    //     log_message('debug', "Export Detail: min_date=$min_date | max_date=$max_date");
+    //     log_message('debug', "Converted: min_date_db=$min_date_db | max_date_db=$max_date_db");
+
+
+    //     // Data
+    //     $data = $this->Transaksi_model->get_transaksi_with_detail($min_date_db, $max_date_db);
+    //     $row = 3;
+    //     $no = 1;
+    //     $last_id_transaksi = null;
+
+    //     foreach ($data as $tr) {
+    //         $same_transaksi = $last_id_transaksi === $tr->id_transaksi;
+
+    //         $sheet->setCellValue("A{$row}", $same_transaksi ? '' : $no++);
+    //         $sheet->setCellValue("B{$row}", $same_transaksi ? '' : $tr->id_transaksi);
+    //         $sheet->setCellValue("C{$row}", $same_transaksi ? '' : $tr->nama_pembeli);
+    //         $sheet->setCellValue("D{$row}", $same_transaksi ? '' : date('d-m-Y', strtotime($tr->tanggal)));
+    //         $sheet->setCellValue("E{$row}", $same_transaksi ? '' : $tr->total_bayar);
+    //         $sheet->setCellValue("F{$row}", $same_transaksi ? '' : $tr->keterangan);
+
+    //         $sheet->setCellValue("G{$row}", $tr->nama_barang);
+    //         $sheet->setCellValue("H{$row}", $tr->jumlah);
+    //         $sheet->setCellValue("I{$row}", $tr->disc_persen);
+    //         $sheet->setCellValue("J{$row}", $tr->disc_rp);
+    //         $sheet->setCellValue("K{$row}", $tr->subtotal);
+
+    //         // Styling dan border
+    //         $sheet->getStyle("A{$row}:K{$row}")->applyFromArray([
+    //             'borders' => [
+    //                 'allBorders' => ['borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN],
+    //             ],
+    //             'alignment' => ['vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER],
+    //         ]);
+
+    //         $sheet->getStyle("E{$row}")
+    //             ->getNumberFormat()
+    //             ->setFormatCode('[$Rp] #,##0.00');
+
+    //         $row++;
+    //         $last_id_transaksi = $tr->id_transaksi;
+    //     }
+    //     log_message('debug', $this->db->last_query());
+
+    //     foreach (range('A', 'K') as $col) {
+    //         $sheet->getColumnDimension($col)->setAutoSize(true);
+    //     }
+
+    //     $filename = 'Laporan_Transaksi_Detail_' . date('YmdHis') . '.xlsx';
+    //     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    //     header("Content-Disposition: attachment;filename=\"$filename\"");
+    //     header('Cache-Control: max-age=0');
+
+    //     $writer = new Xlsx($spreadsheet);
+    //     $writer->save('php://output');
+    //     exit;
+    // }
 }
